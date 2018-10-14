@@ -625,14 +625,16 @@ public class RouterNanoHTTPD extends NanoHTTPD {
 
     private UriRouter router;
 
-    public RouterNanoHTTPD(int port) {
+    public RouterNanoHTTPD(int port, UriRouter router) {
         super(port);
-        router = new UriRouter();
+//        router = new UriRouter();
+        this.router = router;
     }
 
-    public RouterNanoHTTPD(String hostname, int port) {
+    public RouterNanoHTTPD(String hostname, int port, UriRouter router) {
         super(hostname, port);
-        router = new UriRouter();
+//        router = new UriRouter();
+        this.router = router;
     }
 
     /**

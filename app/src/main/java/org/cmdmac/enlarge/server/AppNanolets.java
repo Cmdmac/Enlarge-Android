@@ -39,33 +39,46 @@ package org.cmdmac.enlarge.server;
  * Read the source. Everything is there.
  */
 
-import java.io.BufferedInputStream;
-import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Map;
 
 import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
 import org.nanohttpd.protocols.http.IHTTPSession;
-import org.nanohttpd.protocols.http.response.IStatus;
 import org.nanohttpd.protocols.http.response.Response;
-import org.nanohttpd.protocols.http.response.Status;
 import org.nanohttpd.util.ServerRunner;
 
 public class AppNanolets extends RouterNanoHTTPD {
 
+    private static boolean ENABLE_REMOTE_CONNECT = false;
     private static final int PORT = 9090;
 
+    private static class AppRouter extends UriRouter {
+        RemoteConnectListener listener;
+        public AppRouter(RemoteConnectListener listener) {
+            this.listener = listener;
+        }
+
+        @Override
+        public Response process(IHTTPSession session) {
+            if (listener == null || !listener.isConnectAllow(session.getUri())) {
+                return Response.newFixedLengthResponse("not allow");
+            }
+            return super.process(session);
+        }
+    }
 
     /**
      * Create the server instance
      */
-    public AppNanolets() throws IOException {
-        super(PORT);
+    public AppNanolets(RemoteConnectListener listener) throws IOException {
+        super(PORT, new AppRouter(listener));
         addMappings();
         System.out.println("\nRunning! Point your browers to http://localhost:" + PORT + "/ \n");
     }
+
+    public interface RemoteConnectListener {
+        boolean isConnectAllow(String uri);
+    }
+
 
     /**
      * Add the routes Every route is an absolute path Parameters starts with ":"
@@ -89,11 +102,20 @@ public class AppNanolets extends RouterNanoHTTPD {
         ServerRunner.run(AppNanolets.class);
     }
 
-    public static void start(String[] args) {
+    public static void start(RemoteConnectListener listener) {
         try {
-            new AppNanolets().start();
+            new AppNanolets(listener).start();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+
+    public static void enableRemoteConnect() {
+        ENABLE_REMOTE_CONNECT = true;
+    }
+
+    public static boolean isEnableRemoteConnect() {
+        return ENABLE_REMOTE_CONNECT;
+    }
+
 }
