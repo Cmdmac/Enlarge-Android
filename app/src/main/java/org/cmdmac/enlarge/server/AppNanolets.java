@@ -71,15 +71,30 @@ public class AppNanolets extends RouterNanoHTTPD {
     private PermissionProcesser permissionProcesser;
 
     private static class PermissionEntries {
-        private static HashMap<String, Boolean> mPermissionMap = new HashMap<>();
+        private static class PermissionItem {
+            public String remote;
+            public long time;
+            public PermissionItem(String remote, long time) {
+                this.remote = remote;
+                this.time = time;
+            }
+        }
+        private static HashMap<String, PermissionItem> mPermissionMap = new HashMap<>();
 
         public static void allowRemote(String remote) {
-            mPermissionMap.put(remote, true);
+            PermissionItem item = new PermissionItem(remote, System.currentTimeMillis());
+            mPermissionMap.put(remote, item);
         }
 
         public static boolean isRemoteAllow(String remote) {
             if (mPermissionMap.containsKey(remote)) {
-                return mPermissionMap.get(remote);
+                PermissionItem item = mPermissionMap.get(remote);
+                long t = System.currentTimeMillis() - item.time;
+                if (Math.abs(t) > 60 * 1000) {
+                    mPermissionMap.remove(remote);
+                    return false;
+                }
+                return true;
             } else {
                 return false;
             }
