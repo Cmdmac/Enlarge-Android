@@ -56,12 +56,13 @@ import org.nanohttpd.protocols.http.NanoHTTPD;
 import org.nanohttpd.protocols.http.response.IStatus;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.http.response.Status;
+import org.nanohttpd.protocols.websockets.NanoWSD;
 
 /**
  * @author vnnv
  * @author ritchieGitHub
  */
-public class RouterNanoHTTPD extends NanoHTTPD {
+public abstract class RouterNanoHTTPD extends NanoWSD {
 
     /**
      * logger to log to.

@@ -42,19 +42,33 @@ package org.cmdmac.enlarge.server;
 import java.io.IOException;
 
 import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
+import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
+import org.nanohttpd.protocols.websockets.WebSocket;
 import org.nanohttpd.util.ServerRunner;
 
 public class AppNanolets extends RouterNanoHTTPD {
 
+    private static final int CONNECTION_TIMEOUT = 20 * 1000;
     private static boolean ENABLE_REMOTE_CONNECT = false;
     private static final int PORT = 9090;
 
+    private EnlargeWebSocket.PermissionProcesser permissionProcesser;
+
+    @Override
+    protected WebSocket openWebSocket(IHTTPSession ihttpSession) {
+        return new EnlargeWebSocket(this, ihttpSession, permissionProcesser);
+    }
+
     private static class AppRouter extends UriRouter {
-        RemoteConnectListener listener;
-        public AppRouter(RemoteConnectListener listener) {
-            this.listener = listener;
+        RemoteConnectListener listener = new RemoteConnectListener() {
+            @Override
+            public boolean isConnectAllow(String uri) {
+                return isEnableRemoteConnect();
+            }
+        };
+        public AppRouter() {
         }
 
         @Override
@@ -69,9 +83,10 @@ public class AppNanolets extends RouterNanoHTTPD {
     /**
      * Create the server instance
      */
-    public AppNanolets(RemoteConnectListener listener) throws IOException {
-        super(PORT, new AppRouter(listener));
+    public AppNanolets(EnlargeWebSocket.PermissionProcesser listener) throws IOException {
+        super(PORT, new AppRouter());
         addMappings();
+        this.permissionProcesser = listener;
         System.out.println("\nRunning! Point your browers to http://localhost:" + PORT + "/ \n");
     }
 
@@ -102,9 +117,9 @@ public class AppNanolets extends RouterNanoHTTPD {
         ServerRunner.run(AppNanolets.class);
     }
 
-    public static void start(RemoteConnectListener listener) {
+    public static void start(EnlargeWebSocket.PermissionProcesser permissionProcesser) {
         try {
-            new AppNanolets(listener).start();
+            new AppNanolets(permissionProcesser).start(CONNECTION_TIMEOUT);
         } catch (IOException e) {
             e.printStackTrace();
         }

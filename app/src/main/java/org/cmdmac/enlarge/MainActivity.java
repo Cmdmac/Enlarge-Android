@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.TextView;
 
 import org.cmdmac.enlarge.server.AppNanolets;
+import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
 import org.cmdmac.enlargeserver.R;
 import org.cmdmac.rx.Consumer;
 import org.cmdmac.rx.Observable;
@@ -37,65 +38,8 @@ public class MainActivity extends AppCompatActivity {
         textView.setText(getIPAddress(this));
     }
 
-    private static class PermissionProcesser implements AppNanolets.RemoteConnectListener {
-
-        private boolean isRequestingPermission = false;
-        private Context mContext;
-
-        public PermissionProcesser(Context context) {
-            mContext = context;
-        }
-
-        @Override
-        public boolean isConnectAllow(String uri) {
-            if (isRequestingPermission) {
-                return AppNanolets.isEnableRemoteConnect();
-            } else {
-                isRequestingPermission = true;
-                try {
-                    Observable.create(new ObservableOnSubscribe<Boolean>() {
-                        @Override
-                        public void subscribe(final ObservableEmitter<Boolean> observableEmitter) {
-                            new AlertDialog.Builder(mContext).setPositiveButton("允许", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Log.e(PermissionProcesser.class.getSimpleName(), "allow");
-                                    observableEmitter.onNext(true);
-                                }
-                            }).setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    Log.e(PermissionProcesser.class.getSimpleName(), "deny");
-                                    observableEmitter.onNext(false);
-                                }
-                            }).setTitle("提示").create().show();
-                        }
-                    }).subscribeOn(Schedulers.mainThread()).observeOn(Schedulers.mainThread()).subscribe(new Consumer<Boolean>() {
-                        @Override
-                        public void accept(Boolean aBoolean) {
-                            if (aBoolean) {
-                                AppNanolets.enableRemoteConnect();
-                            }
-                            synchronized (PermissionProcesser.this) {
-                                PermissionProcesser.this.notifyAll();
-                            }
-                        }
-                    });
-
-                    synchronized (this) {
-                        this.wait();
-                    }
-                    Log.e(PermissionProcesser.class.getSimpleName(), "after wait");
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                return AppNanolets.isEnableRemoteConnect();
-            }
-        }
-    }
-
     public void onClick(View v) {
-        AppNanolets.start(new PermissionProcesser(this));
+        AppNanolets.start(new EnlargeWebSocket.PermissionProcesser(this));
     }
 
     public static String getIPAddress(Context context) {
