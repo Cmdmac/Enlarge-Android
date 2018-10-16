@@ -82,12 +82,12 @@ public class EnlargeWebSocket extends WebSocket {
             return mIsRequesting;
         }
 
-        public void requestPermission() {
+        public void requestPermission(final String requestUri, final EnlargeWebSocket webSocket) {
             mIsRequesting = true;
             Observable.create(new ObservableOnSubscribe<Boolean>() {
                 @Override
                 public void subscribe(final ObservableEmitter<Boolean> observableEmitter) {
-                    new AlertDialog.Builder(mContext).setPositiveButton("允许", new DialogInterface.OnClickListener() {
+                    new AlertDialog.Builder(mContext).setMessage("允许" + requestUri+ "访问吗?").setPositiveButton("允许", new DialogInterface.OnClickListener() {
                         @Override
                         public void onClick(DialogInterface dialog, int which) {
                             Log.e(PermissionProcesser.class.getSimpleName(), "allow");
@@ -105,8 +105,18 @@ public class EnlargeWebSocket extends WebSocket {
                 @Override
                 public void accept(Boolean aBoolean) {
                     mIsRequesting = false;
+                    Command command = new Command();
+                    command.type = Command.REQUEST_PERMISSION;
                     if (aBoolean) {
                         AppNanolets.enableRemoteConnect();
+                        command.msg = "allow";
+                    } else {
+                        command.msg = "deny";
+                    }
+                    try {
+                        webSocket.send(JSON.toJSONString(command));
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 }
             });
@@ -145,11 +155,19 @@ public class EnlargeWebSocket extends WebSocket {
                 command.type = Command.PONG;
                 command.msg = "pong";
                 message.setTextPayload(JSON.toJSONString(command));
+                sendFrame(message);
                 break;
             case 100:
                 if (!AppNanolets.isEnableRemoteConnect() && !this.permissionProcesser.isRequesting()) {
-                    this.permissionProcesser.requestPermission();
+                    this.permissionProcesser.requestPermission(getHandshakeRequest().getRemoteIpAddress(), this);
+//                    command.type = Command.REQUEST_PERMISSION;
+//                    command.msg = "requesting";
+//                    message.setTextPayload(JSON.toJSONString(command));
+//                    sendFrame(message);
                 }
+                break;
+            default:
+//                message.setTextPayload(JSON.toJSONString(command));
                 break;
         }
     }
