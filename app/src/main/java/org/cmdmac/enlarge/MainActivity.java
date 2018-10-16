@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onClick(View v) {
-        AppNanolets.start(new EnlargeWebSocket.PermissionProcesser(this));
+        AppNanolets.start(this);
     }
 
     public static String getIPAddress(Context context) {

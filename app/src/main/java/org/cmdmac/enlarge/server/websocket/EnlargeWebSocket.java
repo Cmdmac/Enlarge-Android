@@ -61,67 +61,14 @@ import org.nanohttpd.protocols.websockets.WebSocketFrame;
 public class EnlargeWebSocket extends WebSocket {
 
     private final AppNanolets server;
-    private PermissionProcesser permissionProcesser;
+    private AppNanolets.PermissionProcesser permissionProcesser;
 
-    public EnlargeWebSocket(AppNanolets server, IHTTPSession handshakeRequest, PermissionProcesser permissionProcesser) {
+    public EnlargeWebSocket(AppNanolets server, IHTTPSession handshakeRequest, AppNanolets.PermissionProcesser permissionProcesser) {
         super(handshakeRequest);
         this.server = server;
         this.permissionProcesser = permissionProcesser;
     }
 
-    public static class PermissionProcesser {
-
-        private boolean mIsRequesting = false;
-        private Context mContext;
-
-        public PermissionProcesser(Context context) {
-            mContext = context;
-        }
-
-        public boolean isRequesting() {
-            return mIsRequesting;
-        }
-
-        public void requestPermission(final String requestUri, final EnlargeWebSocket webSocket) {
-            mIsRequesting = true;
-            Observable.create(new ObservableOnSubscribe<Boolean>() {
-                @Override
-                public void subscribe(final ObservableEmitter<Boolean> observableEmitter) {
-                    new AlertDialog.Builder(mContext).setMessage("允许" + requestUri+ "访问吗?").setPositiveButton("允许", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Log.e(PermissionProcesser.class.getSimpleName(), "allow");
-                            observableEmitter.onNext(true);
-                        }
-                    }).setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            Log.e(PermissionProcesser.class.getSimpleName(), "deny");
-                            observableEmitter.onNext(false);
-                        }
-                    }).setTitle("提示").create().show();
-                }
-            }).subscribeOn(Schedulers.mainThread()).observeOn(Schedulers.mainThread()).subscribe(new Consumer<Boolean>() {
-                @Override
-                public void accept(Boolean aBoolean) {
-                    mIsRequesting = false;
-                    Command command = new Command();
-                    command.type = Command.REQUEST_PERMISSION;
-                    if (aBoolean) {
-                        AppNanolets.enableRemoteConnect();
-                        command.msg = "allow";
-                    } else {
-                        command.msg = "deny";
-                    }
-                    try {
-                        webSocket.send(JSON.toJSONString(command));
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            });
-        }
-    }
 
     @Override
     protected void onOpen() {
@@ -158,8 +105,9 @@ public class EnlargeWebSocket extends WebSocket {
                 sendFrame(message);
                 break;
             case 100:
-                if (!AppNanolets.isEnableRemoteConnect() && !this.permissionProcesser.isRequesting()) {
-                    this.permissionProcesser.requestPermission(getHandshakeRequest().getRemoteIpAddress(), this);
+                String remote = getHandshakeRequest().getRemoteIpAddress();
+                if (!permissionProcesser.isPermissionAllow(remote)&& !this.permissionProcesser.isRequesting()) {
+                    this.permissionProcesser.requestPermission(remote, this);
 //                    command.type = Command.REQUEST_PERMISSION;
 //                    command.msg = "requesting";
 //                    message.setTextPayload(JSON.toJSONString(command));

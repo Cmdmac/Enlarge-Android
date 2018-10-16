@@ -8,18 +8,18 @@ package org.cmdmac.enlarge.server;
  * %%
  * Redistribution and use in source and binary forms, with or without modification,
  * are permitted provided that the following conditions are met:
- * 
+ *
  * 1. Redistributions of source code must retain the above copyright notice, this
  *    list of conditions and the following disclaimer.
- * 
+ *
  * 2. Redistributions in binary form must reproduce the above copyright notice,
  *    this list of conditions and the following disclaimer in the documentation
  *    and/or other materials provided with the distribution.
- * 
+ *
  * 3. Neither the name of the nanohttpd nor the names of its contributors
  *    may be used to endorse or promote products derived from this software without
  *    specific prior written permission.
- * 
+ *
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
@@ -39,10 +39,24 @@ package org.cmdmac.enlarge.server;
  * Read the source. Everything is there.
  */
 
+import android.content.Context;
+import android.content.DialogInterface;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
+
+import com.alibaba.fastjson.JSON;
+
 import java.io.IOException;
+import java.util.HashMap;
 
 import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
+import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
+import org.cmdmac.rx.Consumer;
+import org.cmdmac.rx.Observable;
+import org.cmdmac.rx.observable.ObservableEmitter;
+import org.cmdmac.rx.observable.ObservableOnSubscribe;
+import org.cmdmac.rx.scheduler.Schedulers;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.websockets.WebSocket;
@@ -51,10 +65,26 @@ import org.nanohttpd.util.ServerRunner;
 public class AppNanolets extends RouterNanoHTTPD {
 
     private static final int CONNECTION_TIMEOUT = 20 * 1000;
-    private static boolean ENABLE_REMOTE_CONNECT = false;
+    //    private static boolean ENABLE_REMOTE_CONNECT = false;
     private static final int PORT = 9090;
 
-    private EnlargeWebSocket.PermissionProcesser permissionProcesser;
+    private PermissionProcesser permissionProcesser;
+
+    private static class PermissionEntries {
+        private static HashMap<String, Boolean> mPermissionMap = new HashMap<>();
+
+        public static void allowRemote(String remote) {
+            mPermissionMap.put(remote, true);
+        }
+
+        public static boolean isRemoteAllow(String remote) {
+            if (mPermissionMap.containsKey(remote)) {
+                return mPermissionMap.get(remote);
+            } else {
+                return false;
+            }
+        }
+    }
 
     @Override
     protected WebSocket openWebSocket(IHTTPSession ihttpSession) {
@@ -62,18 +92,10 @@ public class AppNanolets extends RouterNanoHTTPD {
     }
 
     private static class AppRouter extends UriRouter {
-        RemoteConnectListener listener = new RemoteConnectListener() {
-            @Override
-            public boolean isConnectAllow(String uri) {
-                return isEnableRemoteConnect();
-            }
-        };
-        public AppRouter() {
-        }
 
         @Override
         public Response process(IHTTPSession session) {
-            if (listener == null || !listener.isConnectAllow(session.getUri())) {
+            if (!PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) {
                 return Response.newFixedLengthResponse("not allow");
             }
             return super.process(session);
@@ -83,15 +105,11 @@ public class AppNanolets extends RouterNanoHTTPD {
     /**
      * Create the server instance
      */
-    public AppNanolets(EnlargeWebSocket.PermissionProcesser listener) throws IOException {
+    public AppNanolets(PermissionProcesser listener) throws IOException {
         super(PORT, new AppRouter());
         addMappings();
         this.permissionProcesser = listener;
         System.out.println("\nRunning! Point your browers to http://localhost:" + PORT + "/ \n");
-    }
-
-    public interface RemoteConnectListener {
-        boolean isConnectAllow(String uri);
     }
 
 
@@ -110,27 +128,85 @@ public class AppNanolets extends RouterNanoHTTPD {
 
     /**
      * Main entry point
-     * 
+     *
      * @param args
      */
     public static void main(String[] args) {
         ServerRunner.run(AppNanolets.class);
     }
 
-    public static void start(EnlargeWebSocket.PermissionProcesser permissionProcesser) {
+    public static void start(Context context) {
         try {
-            new AppNanolets(permissionProcesser).start(CONNECTION_TIMEOUT);
+            new AppNanolets(new PermissionProcesser(context)).start(CONNECTION_TIMEOUT);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public static void enableRemoteConnect() {
-        ENABLE_REMOTE_CONNECT = true;
-    }
+    //
+//    public static void enableRemoteConnect() {
+//        ENABLE_REMOTE_CONNECT = true;
+//    }
+//
+//    public static boolean isEnableRemoteConnect() {
+//        return ENABLE_REMOTE_CONNECT;
+//    }
+    public static class PermissionProcesser {
 
-    public static boolean isEnableRemoteConnect() {
-        return ENABLE_REMOTE_CONNECT;
-    }
+        private boolean mIsRequesting = false;
+        private Context mContext;
 
+        public PermissionProcesser(Context context) {
+            mContext = context;
+        }
+
+        public boolean isRequesting() {
+            return mIsRequesting;
+        }
+
+        public boolean isPermissionAllow(String remote) {
+            return PermissionEntries.isRemoteAllow(remote);
+        }
+
+        public void requestPermission(final String remote, final EnlargeWebSocket webSocket) {
+            mIsRequesting = true;
+            Observable.create(new ObservableOnSubscribe<Boolean>() {
+                @Override
+                public void subscribe(final ObservableEmitter<Boolean> observableEmitter) {
+                    new AlertDialog.Builder(mContext).setMessage("允许" + remote + "访问吗?").setPositiveButton("允许", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Log.e(PermissionProcesser.class.getSimpleName(), "allow");
+                            observableEmitter.onNext(true);
+                        }
+                    }).setNegativeButton("拒绝", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            Log.e(PermissionProcesser.class.getSimpleName(), "deny");
+                            observableEmitter.onNext(false);
+                        }
+                    }).setTitle("提示").create().show();
+                }
+            }).subscribeOn(Schedulers.mainThread()).observeOn(Schedulers.mainThread()).subscribe(new Consumer<Boolean>() {
+                @Override
+                public void accept(Boolean aBoolean) {
+                    mIsRequesting = false;
+                    Command command = new Command();
+                    command.setType(Command.REQUEST_PERMISSION);
+                    if (aBoolean) {
+                        //允许
+                        PermissionEntries.allowRemote(remote);
+                        command.setMsg("allow");
+                    } else {
+                        command.setMsg("deny");
+                    }
+                    try {
+                        webSocket.send(JSON.toJSONString(command));
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                }
+            });
+        }
+    }
 }
