@@ -2,6 +2,7 @@ package org.cmdmac.enlarge;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
@@ -12,6 +13,8 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+
+import com.google.zxing.client.android.CaptureActivity;
 
 import org.cmdmac.enlarge.server.AppNanolets;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
@@ -36,10 +39,20 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         TextView textView = (TextView)findViewById(R.id.textView);
         textView.setText(getIPAddress(this));
+
     }
 
     public void onClick(View v) {
-        AppNanolets.start(this);
+        switch (v.getId()) {
+            case R.id.button:
+                AppNanolets.start(this);
+                break;
+            case R.id.scan:
+                Intent intent = new Intent(this, CaptureActivity.class);
+                startActivity(intent);
+                break;
+        }
+
     }
 
     public static String getIPAddress(Context context) {
