@@ -557,7 +557,7 @@ public final class CaptureActivity extends Activity implements SurfaceHolder.Cal
     Intent intent = new Intent(CaptureActivity.this, LoginActivity.class);
     intent.putExtra("url", displayContents.toString());
     CaptureActivity.this.startActivity(intent);
-//    finish();
+    finish();
 //    TextView contentsTextView = (TextView) findViewById(R.id.contents_text_view);
 //    contentsTextView.setText(displayContents);
 //    int scaledSize = Math.max(22, 32 - displayContents.length() / 4);
