@@ -18,6 +18,8 @@ import org.cmdmac.enlargeserver.R;
 import org.json.JSONException;
 
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.Charset;
 
 import okhttp3.Call;
 import okhttp3.Callback;
@@ -40,9 +42,13 @@ public class LoginActivity extends AppCompatActivity {
         if (TextUtils.isEmpty(mUrl)) {
             return;
         }
+        String addr = Utils.getIPAddress(this) + ":" + AppNanolets.PORT;
+        JSONObject config = new JSONObject();
+        config.put("http", "http://" + addr);
+        config.put("ws", "ws://" + addr);
         OkHttpClient okHttpClient = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url(mUrl + "ws://" + Utils.getIPAddress(this) + ":" + AppNanolets.PORT)
+                .url(mUrl + URLEncoder.encode(config.toJSONString()))
                 .get()//默认就是GET请求，可以不写
                 .build();
         Call call = okHttpClient.newCall(request);
