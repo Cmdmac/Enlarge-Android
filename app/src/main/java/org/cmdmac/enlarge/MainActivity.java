@@ -40,20 +40,18 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         TextView textView = (TextView)findViewById(R.id.textView);
         textView.setText(Utils.getIPAddress(this));
-
+        AppNanolets.start(this);
     }
 
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button:
-                AppNanolets.start(this);
                 break;
             case R.id.scan:
                 Intent intent = new Intent(this, CaptureActivity.class);
                 startActivity(intent);
                 break;
         }
-
     }
 
 }

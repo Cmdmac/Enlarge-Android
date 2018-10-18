@@ -66,7 +66,7 @@ public class AppNanolets extends RouterNanoHTTPD {
 
     private static final int CONNECTION_TIMEOUT = 20 * 1000;
     //    private static boolean ENABLE_REMOTE_CONNECT = false;
-    private static final int PORT = 9090;
+    public static final int PORT = 9090;
 
     private PermissionProcesser permissionProcesser;
 
@@ -103,6 +103,7 @@ public class AppNanolets extends RouterNanoHTTPD {
 
     @Override
     protected WebSocket openWebSocket(IHTTPSession ihttpSession) {
+        Log.e(AppNanolets.class.getSimpleName(), "openWebSocket");
         return new EnlargeWebSocket(this, ihttpSession, permissionProcesser);
     }
 
@@ -199,6 +200,11 @@ public class AppNanolets extends RouterNanoHTTPD {
                         public void onClick(DialogInterface dialog, int which) {
                             Log.e(PermissionProcesser.class.getSimpleName(), "deny");
                             observableEmitter.onNext(false);
+                        }
+                    }).setOnDismissListener(new DialogInterface.OnDismissListener() {
+                        @Override
+                        public void onDismiss(DialogInterface dialog) {
+                            mIsRequesting = false;
                         }
                     }).setTitle("提示").create().show();
                 }

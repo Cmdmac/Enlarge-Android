@@ -12,6 +12,7 @@ import android.view.View;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
+import org.cmdmac.enlarge.server.AppNanolets;
 import org.cmdmac.enlarge.server.utils.Utils;
 import org.cmdmac.enlargeserver.R;
 import org.json.JSONException;
@@ -41,7 +42,7 @@ public class LoginActivity extends AppCompatActivity {
         }
         OkHttpClient okHttpClient = new OkHttpClient();
         final Request request = new Request.Builder()
-                .url(mUrl + "http://" + Utils.getIPAddress(this))
+                .url(mUrl + "ws://" + Utils.getIPAddress(this) + ":" + AppNanolets.PORT)
                 .get()//默认就是GET请求，可以不写
                 .build();
         Call call = okHttpClient.newCall(request);
@@ -53,9 +54,10 @@ public class LoginActivity extends AppCompatActivity {
 
             @Override
             public void onResponse(Call call, Response response) throws IOException {
-                Log.d(LoginActivity.class.getSimpleName(), "onResponse: " + response.body().string());
+                String data = response.body().string();
+                Log.d(LoginActivity.class.getSimpleName(), "onResponse: " + data);
                 try {
-                    org.json.JSONObject j = new org.json.JSONObject(response.body().string());
+                    org.json.JSONObject j = new org.json.JSONObject(data);
                     if (j.has("code")) {
                         String code = j.getString("code");
                         if (!TextUtils.isEmpty(code)) {
