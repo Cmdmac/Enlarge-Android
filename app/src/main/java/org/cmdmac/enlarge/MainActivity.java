@@ -39,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         TextView textView = (TextView)findViewById(R.id.textView);
-        textView.setText(Utils.getIPAddress(this));
+        textView.setText("请打开http://cmdmac.xyz扫描二维码登录或用浏览器输入地址：" + Utils.getIPAddress(this) + ":" + AppNanolets.PORT);
         AppNanolets.start(this);
     }
 

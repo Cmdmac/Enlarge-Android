@@ -208,7 +208,7 @@ public class AppNanolets extends RouterNanoHTTPD {
                         }
                     }).setTitle("提示").create().show();
                 }
-            }).subscribeOn(Schedulers.mainThread()).observeOn(Schedulers.mainThread()).subscribe(new Consumer<Boolean>() {
+            }).subscribeOn(Schedulers.mainThread()).observeOn(Schedulers.newThread()).subscribe(new Consumer<Boolean>() {
                 @Override
                 public void accept(Boolean aBoolean) {
                     mIsRequesting = false;
@@ -221,6 +221,7 @@ public class AppNanolets extends RouterNanoHTTPD {
                     } else {
                         command.setMsg("deny");
                     }
+
                     try {
                         webSocket.send(JSON.toJSONString(command));
                     } catch (IOException e) {
