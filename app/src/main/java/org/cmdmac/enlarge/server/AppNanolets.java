@@ -47,7 +47,10 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
 import org.cmdmac.enlarge.server.websocket.Command;
@@ -70,7 +73,7 @@ public class AppNanolets extends RouterNanoHTTPD {
 
     private PermissionProcesser permissionProcesser;
 
-    private static class PermissionEntries {
+    public static class PermissionEntries {
         private static class PermissionItem {
             public String remote;
             public long time;
@@ -81,17 +84,41 @@ public class AppNanolets extends RouterNanoHTTPD {
         }
         private static HashMap<String, PermissionItem> mPermissionMap = new HashMap<>();
 
+        public static void setPermissionChangeListener(OnPermissonChange listener) {
+            sPermisisonChangeListeners = listener;
+        }
+
+        private static OnPermissonChange sPermisisonChangeListeners = null;
+
+        public static interface OnPermissonChange {
+            void onChange(String[] connectedList);
+        }
+
+        public static String[] getConnectedList() {
+            ArrayList<String> list = new ArrayList<>();
+            for(Map.Entry<String, PermissionItem> entry : mPermissionMap.entrySet()) {
+                list.add(entry.getKey());
+            }
+            return list.toArray(new String[0]);
+        }
+
         public static void allowRemote(String remote) {
             PermissionItem item = new PermissionItem(remote, System.currentTimeMillis());
             mPermissionMap.put(remote, item);
+            if (sPermisisonChangeListeners != null) {
+                sPermisisonChangeListeners.onChange(getConnectedList());
+            }
         }
 
         public static boolean isRemoteAllow(String remote) {
             if (mPermissionMap.containsKey(remote)) {
                 PermissionItem item = mPermissionMap.get(remote);
                 long t = System.currentTimeMillis() - item.time;
-                if (Math.abs(t) > 60 * 1000) {
+                if (Math.abs(t) > 60 * 30 * 1000) {
                     mPermissionMap.remove(remote);
+                    if (sPermisisonChangeListeners != null) {
+                        sPermisisonChangeListeners.onChange(getConnectedList());
+                    }
                     return false;
                 }
                 return true;

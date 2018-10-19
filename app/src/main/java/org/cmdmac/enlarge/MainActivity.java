@@ -7,6 +7,8 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Handler;
+import android.os.Looper;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -32,7 +34,7 @@ import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements AppNanolets.PermissionEntries.OnPermissonChange {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -41,6 +43,8 @@ public class MainActivity extends AppCompatActivity {
         TextView textView = (TextView)findViewById(R.id.textView);
         textView.setText("请打开http://cmdmac.xyz扫描二维码登录或用浏览器输入地址：" + Utils.getIPAddress(this) + ":" + AppNanolets.PORT);
         AppNanolets.start(this);
+
+        AppNanolets.PermissionEntries.setPermissionChangeListener(this);
     }
 
     public void onClick(View v) {
@@ -54,4 +58,20 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @Override
+    public void onChange(String[] connectedList) {
+
+        final StringBuilder sb = new StringBuilder();
+        for (String item : connectedList) {
+            sb.append(item).append("\n");
+        }
+        new Handler(Looper.getMainLooper()).post(new Runnable() {
+            @Override
+            public void run() {
+                TextView textView = (TextView)findViewById(R.id.connected_list);
+                textView.setText(sb);
+            }
+        });
+
+    }
 }
