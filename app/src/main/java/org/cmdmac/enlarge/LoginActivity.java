@@ -8,6 +8,7 @@ import android.text.TextUtils;
 import android.util.Log;
 import android.view.TextureView;
 import android.view.View;
+import android.widget.Toast;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -46,6 +47,7 @@ public class LoginActivity extends AppCompatActivity {
         JSONObject config = new JSONObject();
         config.put("http", "http://" + addr);
         config.put("ws", "ws://" + addr);
+        Toast.makeText(this, addr, Toast.LENGTH_LONG).show();
         OkHttpClient okHttpClient = new OkHttpClient();
         final Request request = new Request.Builder()
                 .url(mUrl + URLEncoder.encode(config.toJSONString()))
