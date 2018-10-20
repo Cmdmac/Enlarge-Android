@@ -47,11 +47,15 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.cmdmac.enlarge.server.annotation.DesktopApp;
+import org.cmdmac.enlarge.server.annotation.RequestMapping;
+import org.cmdmac.enlarge.server.apps.desktop.DesktopHandler;
 import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
 import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
@@ -70,6 +74,8 @@ public class AppNanolets extends RouterNanoHTTPD {
     private static final int CONNECTION_TIMEOUT = 20 * 1000;
     //    private static boolean ENABLE_REMOTE_CONNECT = false;
     public static final int PORT = 9090;
+
+    public static Class<?>[] DESKTOP_APPS = new Class[] {FileManagerHandler.class};
 
     private PermissionProcesser permissionProcesser;
 
@@ -164,9 +170,11 @@ public class AppNanolets extends RouterNanoHTTPD {
     @Override
     public void addMappings() {
         super.addMappings();
-        addRoute("/filemanager/list", FileManagerHandler.class);
-        addRoute("/filemanager/delete", FileManagerHandler.class);
-        addRoute("/filemanager/getThumb", FileManagerHandler.class);
+//        addRoute("/filemanager/list", FileManagerHandler.class);
+//        addRoute("/filemanager/delete", FileManagerHandler.class);
+//        addRoute("/filemanager/getThumb", FileManagerHandler.class);
+        addController(FileManagerHandler.class);
+        addController(DesktopHandler.class);
     }
 
     /**

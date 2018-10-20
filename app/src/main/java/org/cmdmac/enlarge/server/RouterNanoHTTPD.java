@@ -33,11 +33,17 @@ package org.cmdmac.enlarge.server;
  * #L%
  */
 
+import android.text.TextUtils;
+
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -48,9 +54,13 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.logging.StreamHandler;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.cmdmac.enlarge.server.annotation.Controller;
+import org.cmdmac.enlarge.server.annotation.Param;
+import org.cmdmac.enlarge.server.annotation.RequestMapping;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.NanoHTTPD;
 import org.nanohttpd.protocols.http.response.IStatus;
@@ -83,104 +93,76 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
     }
 
     /**
-     * General nanolet to inherit from if you provide stream data, only chucked
-     * responses will be generated.
-     */
-    public static abstract class DefaultStreamHandler implements UriResponder {
-
-        public abstract String getMimeType();
-
-        public abstract IStatus getStatus();
-
-        public abstract InputStream getData();
-
-        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newChunkedResponse(getStatus(), getMimeType(), getData());
-        }
-
-        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
-
-        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
-
-        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
-
-        public Response other(String method, UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return get(uriResource, urlParams, session);
-        }
-    }
-
-    /**
      * General nanolet to inherit from if you provide text or html data, only
      * fixed size responses will be generated.
      */
-    public static abstract class DefaultHandler extends DefaultStreamHandler {
-
+    public static abstract class DefaultHandler implements UriResponder {
         public abstract String getText();
-
+        public abstract String getMimeType();
         public abstract IStatus getStatus();
-
         public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newFixedLengthResponse(getStatus(), getMimeType(), getText());
+            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
         }
 
-        public Response get(IHTTPSession session) {
-            return Response.newFixedLengthResponse("DefaultHandler");
+        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
         }
 
-        @Override
-        public InputStream getData() {
-            throw new IllegalStateException("this method should not be called in a text based nanolet");
+        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
+        }
+
+        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
+        }
+
+        public Response other(String method, UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
         }
     }
 
     /**
      * General nanolet to print debug info's as a html page.
      */
-    public static class GeneralHandler extends DefaultHandler {
+//    public static class GeneralHandler extends DefaultHandler {
 
-        @Override
-        public String getText() {
-            throw new IllegalStateException("this method should not be called");
-        }
+//        @Override
+//        public String getText() {
+//            throw new IllegalStateException("this method should not be called");
+//        }
+//
+//        @Override
+//        public String getMimeType() {
+//            return "text/html";
+//        }
+//
+//        @Override
+//        public IStatus getStatus() {
+//            return Status.OK;
+//        }
 
-        @Override
-        public String getMimeType() {
-            return "text/html";
-        }
-
-        @Override
-        public IStatus getStatus() {
-            return Status.OK;
-        }
-
-        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            StringBuilder text = new StringBuilder("<html><body>");
-            text.append("<h1>Url: ");
-            text.append(session.getUri());
-            text.append("</h1><br>");
-            Map<String, String> queryParams = session.getParms();
-            if (queryParams.size() > 0) {
-                for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-                    String key = entry.getKey();
-                    String value = entry.getValue();
-                    text.append("<p>Param '");
-                    text.append(key);
-                    text.append("' = ");
-                    text.append(value);
-                    text.append("</p>");
-                }
-            } else {
-                text.append("<p>no params in url</p><br>");
-            }
-            return Response.newFixedLengthResponse(getStatus(), getMimeType(), text.toString());
-        }
-    }
+//        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+//            StringBuilder text = new StringBuilder("<html><body>");
+//            text.append("<h1>Url: ");
+//            text.append(session.getUri());
+//            text.append("</h1><br>");
+//            Map<String, String> queryParams = session.getParms();
+//            if (queryParams.size() > 0) {
+//                for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+//                    String key = entry.getKey();
+//                    String value = entry.getValue();
+//                    text.append("<p>Param '");
+//                    text.append(key);
+//                    text.append("' = ");
+//                    text.append(value);
+//                    text.append("</p>");
+//                }
+//            } else {
+//                text.append("<p>no params in url</p><br>");
+//            }
+//            return Response.newFixedLengthResponse(getStatus(), getMimeType(), text.toString());
+//        }
+//    }
 
     /**
      * General nanolet to print debug info's as a html page.
@@ -200,17 +182,14 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
         }
 
-        @Override
         public String getText() {
             throw new IllegalStateException("this method should not be called");
         }
 
-        @Override
         public String getMimeType() {
             throw new IllegalStateException("this method should not be called");
         }
 
-        @Override
         public IStatus getStatus() {
             return Status.OK;
         }
@@ -255,6 +234,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
      */
     public static class Error404UriHandler extends DefaultHandler {
 
+        @Override
         public String getText() {
             return "<html><body><h3>Error 404: the requested page doesn't exist.</h3></body></html>";
         }
@@ -274,16 +254,14 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
      * Handling index
      */
     public static class IndexHandler extends DefaultHandler {
-
+        @Override
         public String getText() {
             return "<html><body><h2>Hello world!</h3></body></html>";
         }
-
         @Override
         public String getMimeType() {
             return "text/html";
         }
-
         @Override
         public IStatus getStatus() {
             return Status.OK;
@@ -293,6 +271,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
     public static class NotImplementedHandler extends DefaultHandler {
 
+        @Override
         public String getText() {
             return "<html><body><h2>The uri is mapped in the router, but no handler is specified. <br> Status: Not implemented!</h3></body></html>";
         }
@@ -338,6 +317,8 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
         private final Class<?> handler;
 
+        private RequestMappingParams requestMappingParams;
+
         private final Object[] initParameter;
 
         private final List<String> uriParams = new ArrayList<String>();
@@ -360,6 +341,12 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             }
         }
 
+        public UriResource(RequestMappingParams requestMappingParams) {
+            this(requestMappingParams.path, requestMappingParams.handler);
+            this.priority = 100 + uriParams.size() * 1000;
+            this.requestMappingParams = requestMappingParams;
+        }
+
         private void parse() {
         }
 
@@ -378,12 +365,63 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             return Pattern.compile(patternUri);
         }
 
+        private Object valueToObject(Type t, String v) {
+            try {
+                if (t == int.class) {
+                    return Integer.parseInt(v);
+                } else if (t == long.class) {
+                    return Long.parseLong(v);
+                } else if (t == float.class) {
+                    return Float.parseFloat(v);
+                } else if (t == Integer.class) {
+                    return Integer.parseInt(v);
+                } else if (t == Long.class) {
+                    return Long.parseLong(v);
+                } else if (t == Float.class) {
+                    return Float.parseFloat(v);
+                } else if (t == Long.class) {
+                    return Long.parseLong(v);
+                } else {
+                    return v;
+                }
+            } catch (Exception e) {
+                return v;
+            }
+        }
+
+        private Response processController(Object object, Map<String, String> urlParams, IHTTPSession session) throws InvocationTargetException, IllegalAccessException {
+            if (requestMappingParams.method != session.getMethod()) {
+                return Response.newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", "method not supply");
+            }
+            ArrayList<Object> params = new ArrayList<>();
+            Map<String, List<String>> requestParams = session.getParameters();
+            if (requestParams != null) {
+                Type[] types = requestMappingParams.methodReflect.getGenericParameterTypes();
+                for (int i = 0; i < requestMappingParams.params.size(); i++) {
+                    Param p = requestMappingParams.params.get(i);
+                    if (!TextUtils.isEmpty(p.name())) {
+                        List<String> values = requestParams.get(p.name());
+                        if (values != null && values.size() > 0) {
+                            String v = values.get(0);
+                            Type t = types[i];
+                            params.add(valueToObject(t, v));
+                        } else {
+                            params.add(p.value());
+                        }
+                    }
+                }
+            }
+            return (Response)requestMappingParams.methodReflect.invoke(object, params.toArray());
+        }
+
         public Response process(Map<String, String> urlParams, IHTTPSession session) {
             String error = "General error!";
             if (handler != null) {
                 try {
                     Object object = handler.newInstance();
-                    if (object instanceof UriResponder) {
+                    if (requestMappingParams != null) {
+                        return processController(object, urlParams, session);
+                    } else if (object instanceof UriResponder) {
                         UriResponder responder = (UriResponder) object;
                         switch (session.getMethod()) {
                             case GET:
@@ -478,9 +516,19 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
         void removeRoute(String url);
 
+        void addController(Class<?> controller);
+
         Collection<UriResource> getPrioritizedRoutes();
 
         void setNotImplemented(Class<?> notImplemented);
+    }
+
+    public static class RequestMappingParams {
+        public String path;
+        public Class<?> handler;
+        public org.nanohttpd.protocols.http.request.Method method;
+        public Method methodReflect;
+        public ArrayList<Param> params;
     }
 
     public static abstract class BaseRoutePrioritizer implements IRoutePrioritizer {
@@ -503,6 +551,11 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
                     mappings.add(new UriResource(url, priority + mappings.size(), notImplemented));
                 }
             }
+        }
+
+        public void addRoute(RequestMappingParams requestMappingParams) {
+            UriResource resource = new UriResource(requestMappingParams);
+            mappings.add(resource);
         }
 
         public void removeRoute(String url) {
@@ -528,6 +581,42 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         }
 
         protected abstract Collection<UriResource> newMappingCollection();
+
+        @Override
+        public void addController(Class<?> controller) {
+            // has controller annotation
+            if (controller.isAnnotationPresent(Controller.class)) {
+                Controller controllerAnnotation = controller.getAnnotation(Controller.class);
+                String name = controllerAnnotation.name();
+                Method[] methods = controller.getDeclaredMethods();
+                // get all request mapping annotation
+                for (Method method : methods) {
+                    if (method.isAnnotationPresent(RequestMapping.class)) {
+                        RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
+                        String path = requestMapping.path();
+                        org.nanohttpd.protocols.http.request.Method m = requestMapping.method();
+                        // build full path
+                        String fullPath = name + File.separatorChar + path;
+                        // getparams
+                        ArrayList<Param> params = new ArrayList<>();
+                        Annotation[][] paramAnnotation = method.getParameterAnnotations();
+                        for (Annotation[] an : paramAnnotation) {
+                            if (an.length > 0) {
+                                Param p = (Param)an[0];
+                                params.add(p);
+                            }
+                        }
+                        RequestMappingParams requestMappingParams = new RequestMappingParams();
+                        requestMappingParams.path = fullPath;
+                        requestMappingParams.handler = controller;
+                        requestMappingParams.method = m;
+                        requestMappingParams.methodReflect = method;
+                        requestMappingParams.params = params;
+                        addRoute(requestMappingParams);
+                    }
+                }
+            }
+        }
     }
 
     public static class ProvidedPriorityRoutePrioritizer extends BaseRoutePrioritizer {
@@ -559,6 +648,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         protected Collection<UriResource> newMappingCollection() {
             return new PriorityQueue<UriResource>();
         }
+
     }
 
     public static class InsertionOrderRoutePrioritizer extends BaseRoutePrioritizer {
@@ -610,6 +700,10 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             routePrioritizer.removeRoute(url);
         }
 
+        public void addController(Class<?> controller) {
+            routePrioritizer.addController(controller);
+        }
+
         public void setNotFoundHandler(Class<?> handler) {
             error404Url = new UriResource(null, 100, handler);
         }
@@ -655,6 +749,10 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
     public void addRoute(String url, Class<?> handler, Object... initParameter) {
         router.addRoute(url, 100, handler, initParameter);
+    }
+
+    public void addController(Class<?> controller) {
+        router.addController(controller);
     }
 
     public <T extends UriResponder> void setNotImplementedHandler(Class<T> handler) {

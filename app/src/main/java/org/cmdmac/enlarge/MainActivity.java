@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements AppNanolets.Permi
         setContentView(R.layout.activity_main);
         TextView textView = (TextView)findViewById(R.id.textView);
         textView.setText("请打开http://cmdmac.xyz扫描二维码登录或用浏览器输入地址：" + Utils.getIPAddress(this) + ":" + AppNanolets.PORT);
-        AppNanolets.start(this);
+//        AppNanolets.start(this);
 
         AppNanolets.PermissionEntries.setPermissionChangeListener(this);
     }
@@ -50,6 +50,7 @@ public class MainActivity extends AppCompatActivity implements AppNanolets.Permi
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.button:
+                AppNanolets.start(this);
                 break;
             case R.id.scan:
                 Intent intent = new Intent(this, CaptureActivity.class);
