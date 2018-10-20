@@ -2,9 +2,9 @@ package org.cmdmac.enlarge.server;
 
 import android.app.Application;
 
-public class EnalargeApplication extends Application {
-    private static EnalargeApplication sInstance;
-    public static EnalargeApplication getInstance() {
+public class EnlargeApplication extends Application {
+    private static EnlargeApplication sInstance;
+    public static EnlargeApplication getInstance() {
         return sInstance;
     }
     @Override

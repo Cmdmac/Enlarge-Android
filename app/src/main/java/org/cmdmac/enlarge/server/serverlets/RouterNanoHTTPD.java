@@ -268,7 +268,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         }
 
         public void setStaticHandler(Class<?> handler) {
-            staticUrl = new RouterMatcher("/sdcard", 100, handler);
+            staticUrl = new RouterMatcher(StaticPageHandler.ANDDROID_ASSETS_SCHEMA, 100, handler);
         }
 
         public void setNotImplemented(Class<?> handler) {
