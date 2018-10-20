@@ -47,16 +47,14 @@ import android.util.Log;
 import com.alibaba.fastjson.JSON;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import org.cmdmac.enlarge.server.annotation.DesktopApp;
-import org.cmdmac.enlarge.server.annotation.RequestMapping;
 import org.cmdmac.enlarge.server.apps.desktop.DesktopHandler;
 import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
+import org.cmdmac.enlarge.server.handlers.StaticPageHandler;
+import org.cmdmac.enlarge.server.serverlets.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
 import org.cmdmac.rx.Consumer;
@@ -144,9 +142,9 @@ public class AppNanolets extends RouterNanoHTTPD {
 
         @Override
         public Response process(IHTTPSession session) {
-            if (!PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) {
-                return Response.newFixedLengthResponse("not allow");
-            }
+//            if (!PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) {
+//                return Response.newFixedLengthResponse("not allow");
+//            }
             return super.process(session);
         }
     }
@@ -172,7 +170,8 @@ public class AppNanolets extends RouterNanoHTTPD {
         super.addMappings();
 //        addRoute("/filemanager/list", FileManagerHandler.class);
 //        addRoute("/filemanager/delete", FileManagerHandler.class);
-//        addRoute("/filemanager/getThumb", FileManagerHandler.class);
+//        addRoute("/sdcard", StaticPageHandler.class);
+
         addController(FileManagerHandler.class);
         addController(DesktopHandler.class);
     }

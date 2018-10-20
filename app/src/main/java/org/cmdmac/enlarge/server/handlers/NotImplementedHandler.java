@@ -1,6 +1,5 @@
 package org.cmdmac.enlarge.server.handlers;
 
-import org.cmdmac.enlarge.server.RouterNanoHTTPD;
 import org.nanohttpd.protocols.http.response.IStatus;
 import org.nanohttpd.protocols.http.response.Status;
 

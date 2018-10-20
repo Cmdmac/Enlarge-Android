@@ -1,27 +1,19 @@
 package org.cmdmac.enlarge.server.apps.filemanager;
 
 import android.graphics.Bitmap;
-import android.net.Uri;
-import android.os.Environment;
-import android.text.TextUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
 import org.cmdmac.enlarge.server.annotation.Controller;
 import org.cmdmac.enlarge.server.annotation.DesktopApp;
-import org.cmdmac.enlarge.server.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.annotation.Param;
 import org.cmdmac.enlarge.server.annotation.RequestMapping;
-import org.nanohttpd.protocols.http.IHTTPSession;
-import org.nanohttpd.protocols.http.response.IStatus;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.http.response.Status;
 
 import java.io.*;
 import java.io.File;
-import java.util.List;
-import java.util.Map;
 
 /**
  * Created by fengzhiping on 2018/10/12.
@@ -45,7 +37,7 @@ public class FileManagerHandler {
 //    }
 //
 //    @Override
-//    public Response get(RouterNanoHTTPD.UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
+//    public Response get(RouterNanoHTTPD.RouterMatcher uriResource, Map<String, String> urlParams, IHTTPSession session) {
 //        return get(session);
 //    }
 //

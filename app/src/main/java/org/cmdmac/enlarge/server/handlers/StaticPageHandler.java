@@ -1,6 +1,6 @@
 package org.cmdmac.enlarge.server.handlers;
 
-import org.cmdmac.enlarge.server.RouterNanoHTTPD;
+import org.cmdmac.enlarge.server.serverlets.RouterMatcher;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.IStatus;
 import org.nanohttpd.protocols.http.response.Response;
@@ -49,30 +49,31 @@ public class StaticPageHandler extends DefaultHandler {
         return Status.OK;
     }
 
-    public Response get(RouterNanoHTTPD.UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-        String baseUri = uriResource.getUri();
+    public Response get(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
+        String baseUri = routerMatcher.getUri();
         String realUri = normalizeUri(session.getUri());
-        for (int index = 0; index < Math.min(baseUri.length(), realUri.length()); index++) {
-            if (baseUri.charAt(index) != realUri.charAt(index)) {
-                realUri = normalizeUri(realUri.substring(index));
-                break;
-            }
-        }
-        File fileOrdirectory = uriResource.initParameter(File.class);
-        for (String pathPart : getPathArray(realUri)) {
-            fileOrdirectory = new File(fileOrdirectory, pathPart);
-        }
-        if (fileOrdirectory.isDirectory()) {
-            fileOrdirectory = new File(fileOrdirectory, "index.html");
-            if (!fileOrdirectory.exists()) {
-                fileOrdirectory = new File(fileOrdirectory.getParentFile(), "index.htm");
-            }
-        }
-        if (!fileOrdirectory.exists() || !fileOrdirectory.isFile()) {
-            return new Error404UriHandler().get(uriResource, urlParams, session);
+//        for (int index = 0; index < Math.min(baseUri.length(), realUri.length()); index++) {
+//            if (baseUri.charAt(index) != realUri.charAt(index)) {
+//                realUri = normalizeUri(realUri.substring(index));
+//                break;
+//            }
+//        }
+//        File fileOrdirectory = routerMatcher.initParameter(File.class);
+//        for (String pathPart : getPathArray(realUri)) {
+//            fileOrdirectory = new File(fileOrdirectory, pathPart);
+//        }
+//        if (fileOrdirectory.isDirectory()) {
+//            fileOrdirectory = new File(fileOrdirectory, "index.html");
+//            if (!fileOrdirectory.exists()) {
+//                fileOrdirectory = new File(fileOrdirectory.getParentFile(), "index.htm");
+//            }
+//        }
+        File f = new File(baseUri, realUri);
+        if (!f.exists() || !f.isFile()) {
+            return new Error404UriHandler().get(routerMatcher, urlParams, session);
         } else {
             try {
-                return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(fileOrdirectory.getName()), fileToInputStream(fileOrdirectory));
+                return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(f.getName()), fileToInputStream(f));
             } catch (IOException ioe) {
                 return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
             }
