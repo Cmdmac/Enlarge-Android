@@ -7,6 +7,7 @@ import org.cmdmac.enlarge.server.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.annotation.Controller;
 import org.cmdmac.enlarge.server.annotation.DesktopApp;
 import org.cmdmac.enlarge.server.annotation.RequestMapping;
+import org.cmdmac.enlarge.server.handlers.DefaultHandler;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.nanohttpd.protocols.http.IHTTPSession;
@@ -24,22 +25,7 @@ import java.util.Map;
  */
 
 @Controller(name = "desktop")
-public class DesktopHandler extends RouterNanoHTTPD.DefaultHandler {
-    @Override
-    public String getMimeType() {
-        return "application/json";
-    }
-
-    @Override
-    public String getText() {
-        return null;
-    }
-
-    @Override
-    public IStatus getStatus() {
-        return Status.OK;
-    }
-
+public class DesktopHandler {
 //    public Response get(RouterNanoHTTPD.UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
 //        String uri = session.getUri();
 //        Map<String, List<String>> params = session.getParameters();
@@ -68,7 +54,7 @@ public class DesktopHandler extends RouterNanoHTTPD.DefaultHandler {
             e.printStackTrace();
         }
 
-        Response response = Response.newFixedLengthResponse(getStatus(), getMimeType(), json.toString());
+        Response response = Response.newFixedLengthResponse(Status.OK, "application/json", json.toString());
         response.addHeader("Access-Control-Allow-Origin", "*");
         return response;
     }

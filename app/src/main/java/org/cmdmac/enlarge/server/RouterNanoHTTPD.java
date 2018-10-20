@@ -61,6 +61,10 @@ import java.util.regex.Pattern;
 import org.cmdmac.enlarge.server.annotation.Controller;
 import org.cmdmac.enlarge.server.annotation.Param;
 import org.cmdmac.enlarge.server.annotation.RequestMapping;
+import org.cmdmac.enlarge.server.handlers.DefaultHandler;
+import org.cmdmac.enlarge.server.handlers.Error404UriHandler;
+import org.cmdmac.enlarge.server.handlers.IndexHandler;
+import org.cmdmac.enlarge.server.handlers.NotImplementedHandler;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.NanoHTTPD;
 import org.nanohttpd.protocols.http.response.IStatus;
@@ -78,228 +82,6 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
      * logger to log to.
      */
     private static final Logger LOG = Logger.getLogger(RouterNanoHTTPD.class.getName());
-
-    public interface UriResponder {
-
-        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-
-        public Response other(String method, UriResource uriResource, Map<String, String> urlParams, IHTTPSession session);
-    }
-
-    /**
-     * General nanolet to inherit from if you provide text or html data, only
-     * fixed size responses will be generated.
-     */
-    public static abstract class DefaultHandler implements UriResponder {
-        public abstract String getText();
-        public abstract String getMimeType();
-        public abstract IStatus getStatus();
-        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
-        }
-
-        public Response put(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
-        }
-
-        public Response post(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
-        }
-
-        public Response delete(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
-        }
-
-        public Response other(String method, UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            return Response.newFixedLengthResponse(Status.NOT_FOUND, "text/plain", "not found");
-        }
-    }
-
-    /**
-     * General nanolet to print debug info's as a html page.
-     */
-//    public static class GeneralHandler extends DefaultHandler {
-
-//        @Override
-//        public String getText() {
-//            throw new IllegalStateException("this method should not be called");
-//        }
-//
-//        @Override
-//        public String getMimeType() {
-//            return "text/html";
-//        }
-//
-//        @Override
-//        public IStatus getStatus() {
-//            return Status.OK;
-//        }
-
-//        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-//            StringBuilder text = new StringBuilder("<html><body>");
-//            text.append("<h1>Url: ");
-//            text.append(session.getUri());
-//            text.append("</h1><br>");
-//            Map<String, String> queryParams = session.getParms();
-//            if (queryParams.size() > 0) {
-//                for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-//                    String key = entry.getKey();
-//                    String value = entry.getValue();
-//                    text.append("<p>Param '");
-//                    text.append(key);
-//                    text.append("' = ");
-//                    text.append(value);
-//                    text.append("</p>");
-//                }
-//            } else {
-//                text.append("<p>no params in url</p><br>");
-//            }
-//            return Response.newFixedLengthResponse(getStatus(), getMimeType(), text.toString());
-//        }
-//    }
-
-    /**
-     * General nanolet to print debug info's as a html page.
-     */
-    public static class StaticPageHandler extends DefaultHandler {
-
-        private static String[] getPathArray(String uri) {
-            String array[] = uri.split("/");
-            ArrayList<String> pathArray = new ArrayList<String>();
-
-            for (String s : array) {
-                if (s.length() > 0)
-                    pathArray.add(s);
-            }
-
-            return pathArray.toArray(new String[]{});
-
-        }
-
-        public String getText() {
-            throw new IllegalStateException("this method should not be called");
-        }
-
-        public String getMimeType() {
-            throw new IllegalStateException("this method should not be called");
-        }
-
-        public IStatus getStatus() {
-            return Status.OK;
-        }
-
-        public Response get(UriResource uriResource, Map<String, String> urlParams, IHTTPSession session) {
-            String baseUri = uriResource.getUri();
-            String realUri = normalizeUri(session.getUri());
-            for (int index = 0; index < Math.min(baseUri.length(), realUri.length()); index++) {
-                if (baseUri.charAt(index) != realUri.charAt(index)) {
-                    realUri = normalizeUri(realUri.substring(index));
-                    break;
-                }
-            }
-            File fileOrdirectory = uriResource.initParameter(File.class);
-            for (String pathPart : getPathArray(realUri)) {
-                fileOrdirectory = new File(fileOrdirectory, pathPart);
-            }
-            if (fileOrdirectory.isDirectory()) {
-                fileOrdirectory = new File(fileOrdirectory, "index.html");
-                if (!fileOrdirectory.exists()) {
-                    fileOrdirectory = new File(fileOrdirectory.getParentFile(), "index.htm");
-                }
-            }
-            if (!fileOrdirectory.exists() || !fileOrdirectory.isFile()) {
-                return new Error404UriHandler().get(uriResource, urlParams, session);
-            } else {
-                try {
-                    return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(fileOrdirectory.getName()), fileToInputStream(fileOrdirectory));
-                } catch (IOException ioe) {
-                    return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
-                }
-            }
-        }
-
-        protected BufferedInputStream fileToInputStream(File fileOrdirectory) throws IOException {
-            return new BufferedInputStream(new FileInputStream(fileOrdirectory));
-        }
-    }
-
-    /**
-     * Handling error 404 - unrecognized urls
-     */
-    public static class Error404UriHandler extends DefaultHandler {
-
-        @Override
-        public String getText() {
-            return "<html><body><h3>Error 404: the requested page doesn't exist.</h3></body></html>";
-        }
-
-        @Override
-        public String getMimeType() {
-            return "text/html";
-        }
-
-        @Override
-        public IStatus getStatus() {
-            return Status.NOT_FOUND;
-        }
-    }
-
-    /**
-     * Handling index
-     */
-    public static class IndexHandler extends DefaultHandler {
-        @Override
-        public String getText() {
-            return "<html><body><h2>Hello world!</h3></body></html>";
-        }
-        @Override
-        public String getMimeType() {
-            return "text/html";
-        }
-        @Override
-        public IStatus getStatus() {
-            return Status.OK;
-        }
-
-    }
-
-    public static class NotImplementedHandler extends DefaultHandler {
-
-        @Override
-        public String getText() {
-            return "<html><body><h2>The uri is mapped in the router, but no handler is specified. <br> Status: Not implemented!</h3></body></html>";
-        }
-
-        @Override
-        public String getMimeType() {
-            return "text/html";
-        }
-
-        @Override
-        public IStatus getStatus() {
-            return Status.OK;
-        }
-    }
-
-    public static String normalizeUri(String value) {
-        if (value == null) {
-            return value;
-        }
-        if (value.startsWith("/")) {
-            value = value.substring(1);
-        }
-        if (value.endsWith("/")) {
-            value = value.substring(0, value.length() - 1);
-        }
-        return value;
-
-    }
 
     public static class UriResource implements Comparable<UriResource> {
 
@@ -332,7 +114,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             this.handler = handler;
             this.initParameter = initParameter;
             if (uri != null) {
-                this.uri = normalizeUri(uri);
+                this.uri = DefaultHandler.normalizeUri(uri);
                 parse();
                 this.uriPattern = createUriPattern();
             } else {
@@ -421,20 +203,9 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
                     Object object = handler.newInstance();
                     if (requestMappingParams != null) {
                         return processController(object, urlParams, session);
-                    } else if (object instanceof UriResponder) {
-                        UriResponder responder = (UriResponder) object;
-                        switch (session.getMethod()) {
-                            case GET:
-                                return responder.get(this, urlParams, session);
-                            case POST:
-                                return responder.post(this, urlParams, session);
-                            case PUT:
-                                return responder.put(this, urlParams, session);
-                            case DELETE:
-                                return responder.delete(this, urlParams, session);
-                            default:
-                                return responder.other(session.getMethod().toString(), this, urlParams, session);
-                        }
+                    } else if (object instanceof DefaultHandler) {
+                        DefaultHandler responder = (DefaultHandler) object;
+                        responder.get(this, urlParams, session);
                     } else {
                         return Response.newFixedLengthResponse(Status.OK, "text/plain", //
                                 new StringBuilder("Return: ")//
@@ -559,7 +330,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         }
 
         public void removeRoute(String url) {
-            String uriToDelete = normalizeUri(url);
+            String uriToDelete = DefaultHandler.normalizeUri(url);
             Iterator<UriResource> iter = mappings.iterator();
             while (iter.hasNext()) {
                 UriResource uriResource = iter.next();
@@ -679,7 +450,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
          * @return
          */
         public Response process(IHTTPSession session) {
-            String work = normalizeUri(session.getUri());
+            String work = DefaultHandler.normalizeUri(session.getUri());
             Map<String, String> params = null;
             UriResource uriResource = error404Url;
             for (UriResource u : routePrioritizer.getPrioritizedRoutes()) {
@@ -755,11 +526,11 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         router.addController(controller);
     }
 
-    public <T extends UriResponder> void setNotImplementedHandler(Class<T> handler) {
+    public <T extends DefaultHandler> void setNotImplementedHandler(Class<T> handler) {
         router.setNotImplemented(handler);
     }
 
-    public <T extends UriResponder> void setNotFoundHandler(Class<T> handler) {
+    public <T extends DefaultHandler> void setNotFoundHandler(Class<T> handler) {
         router.setNotFoundHandler(handler);
     }
 
