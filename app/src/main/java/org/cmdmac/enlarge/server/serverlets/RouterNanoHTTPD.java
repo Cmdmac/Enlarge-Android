@@ -86,6 +86,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         public org.nanohttpd.protocols.http.request.Method method;
         public Method methodReflect;
         public ArrayList<Param> params;
+        public boolean needPermissionControl = true;
     }
 
     public static abstract class BaseRoutePrioritizer implements IRoutePrioritizer {
@@ -145,6 +146,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             if (controller.isAnnotationPresent(Controller.class)) {
                 Controller controllerAnnotation = controller.getAnnotation(Controller.class);
                 String name = controllerAnnotation.name();
+                boolean needPermissionControl = controllerAnnotation.needPermissonControl();
                 Method[] methods = controller.getDeclaredMethods();
                 // get all request mapping annotation
                 for (Method method : methods) {
@@ -169,6 +171,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
                         requestMappingParams.method = m;
                         requestMappingParams.methodReflect = method;
                         requestMappingParams.params = params;
+                        requestMappingParams.needPermissionControl = needPermissionControl;
                         addRoute(requestMappingParams);
                     }
                 }

@@ -13,7 +13,7 @@ import org.nanohttpd.protocols.http.response.Status;
  * Created by fengzhiping on 2018/10/20.
  */
 
-@Controller(name = "desktop")
+@Controller(name = "desktop", needPermissonControl = false)
 public class DesktopHandler {
 //    public Response get(RouterNanoHTTPD.RouterMatcher uriResource, Map<String, String> urlParams, IHTTPSession session) {
 //        String uri = session.getUri();

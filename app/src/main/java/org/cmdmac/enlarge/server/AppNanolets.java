@@ -142,9 +142,6 @@ public class AppNanolets extends RouterNanoHTTPD {
 
         @Override
         public Response process(IHTTPSession session) {
-//            if (!PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) {
-//                return Response.newFixedLengthResponse("not allow");
-//            }
             return super.process(session);
         }
     }

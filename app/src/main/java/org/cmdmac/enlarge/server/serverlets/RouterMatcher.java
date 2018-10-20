@@ -2,6 +2,7 @@ package org.cmdmac.enlarge.server.serverlets;
 
 import android.text.TextUtils;
 
+import org.cmdmac.enlarge.server.AppNanolets;
 import org.cmdmac.enlarge.server.annotation.Param;
 import org.cmdmac.enlarge.server.handlers.DefaultHandler;
 import org.nanohttpd.protocols.http.IHTTPSession;
@@ -114,6 +115,11 @@ public class RouterMatcher implements Comparable<RouterMatcher> {
     }
 
     private Response processController(Object object, Map<String, String> urlParams, IHTTPSession session) throws InvocationTargetException, IllegalAccessException {
+        if (requestMappingParams.needPermissionControl) {
+            if (!AppNanolets.PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) {
+                return Response.newFixedLengthResponse("not allow");
+            }
+        }
         if (requestMappingParams.method != session.getMethod()) {
             return Response.newFixedLengthResponse(Status.INTERNAL_ERROR, "text/plain", "method not supply");
         }
