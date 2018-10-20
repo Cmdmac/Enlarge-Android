@@ -307,7 +307,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
         router.setNotImplemented(NotImplementedHandler.class);
         router.setNotFoundHandler(Error404UriHandler.class);
         router.setStaticHandler(StaticPageHandler.class);
-        router.addRoute("/", Integer.MAX_VALUE / 2, IndexHandler.class);
+//        router.addRoute("/", Integer.MAX_VALUE / 2, IndexHandler.class);
         router.addRoute("/index.html", Integer.MAX_VALUE / 2, IndexHandler.class);
     }
 

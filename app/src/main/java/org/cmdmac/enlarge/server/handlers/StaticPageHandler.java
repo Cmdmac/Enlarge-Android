@@ -1,5 +1,7 @@
 package org.cmdmac.enlarge.server.handlers;
 
+import android.text.TextUtils;
+
 import org.cmdmac.enlarge.server.serverlets.RouterMatcher;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.IStatus;
@@ -52,30 +54,31 @@ public class StaticPageHandler extends DefaultHandler {
     public Response get(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
         String baseUri = routerMatcher.getUri();
         String realUri = normalizeUri(session.getUri());
-//        for (int index = 0; index < Math.min(baseUri.length(), realUri.length()); index++) {
-//            if (baseUri.charAt(index) != realUri.charAt(index)) {
-//                realUri = normalizeUri(realUri.substring(index));
-//                break;
-//            }
-//        }
-//        File fileOrdirectory = routerMatcher.initParameter(File.class);
-//        for (String pathPart : getPathArray(realUri)) {
-//            fileOrdirectory = new File(fileOrdirectory, pathPart);
-//        }
-//        if (fileOrdirectory.isDirectory()) {
-//            fileOrdirectory = new File(fileOrdirectory, "index.html");
-//            if (!fileOrdirectory.exists()) {
-//                fileOrdirectory = new File(fileOrdirectory.getParentFile(), "index.htm");
-//            }
-//        }
-        File f = new File(baseUri, realUri);
-        if (!f.exists() || !f.isFile()) {
-            return new Error404UriHandler().get(routerMatcher, urlParams, session);
+
+        if (TextUtils.isEmpty(realUri)) {
+            // http://host, find index.html
+            File index = new File(baseUri, "index.html");
+            if (!index.exists()) {
+                // not find index.html, return default IndexHandler
+                return new IndexHandler().get(routerMatcher, urlParams, session);
+            } else {
+                try {
+                    return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(index.getName()), fileToInputStream(index));
+                } catch (IOException ioe) {
+                    return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
+                }
+            }
+
         } else {
-            try {
-                return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(f.getName()), fileToInputStream(f));
-            } catch (IOException ioe) {
-                return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
+            File f = new File(baseUri, realUri);
+            if (!f.exists() || !f.isFile()) {
+                return new Error404UriHandler().get(routerMatcher, urlParams, session);
+            } else {
+                try {
+                    return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(f.getName()), fileToInputStream(f));
+                } catch (IOException ioe) {
+                    return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
+                }
             }
         }
     }
