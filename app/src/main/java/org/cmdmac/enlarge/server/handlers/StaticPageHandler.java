@@ -30,6 +30,7 @@ import static org.nanohttpd.protocols.http.NanoHTTPD.getMimeTypeForFile;
 public class StaticPageHandler extends DefaultHandler {
 
     public static String ANDDROID_ASSETS_SCHEMA = "file:///android_assets";
+    public static String STATIC_DIRECTORY = ANDDROID_ASSETS_SCHEMA;
 
     private static String[] getPathArray(String uri) {
         String array[] = uri.split("/");
