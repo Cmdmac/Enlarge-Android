@@ -29,7 +29,7 @@ import static org.nanohttpd.protocols.http.NanoHTTPD.getMimeTypeForFile;
  */
 public class StaticPageHandler extends DefaultHandler {
 
-    public static String ANDDROID_ASSETS_SCHEMA = "file:///android_assets";
+    public static String ANDDROID_ASSETS_SCHEMA = "file:///android_assets/dist";
     public static String STATIC_DIRECTORY = ANDDROID_ASSETS_SCHEMA;
 
     private static String[] getPathArray(String uri) {
@@ -57,6 +57,11 @@ public class StaticPageHandler extends DefaultHandler {
         return Status.OK;
     }
 
+    private String getAssetRoot() {
+        int index = ANDDROID_ASSETS_SCHEMA.lastIndexOf('/');
+        return ANDDROID_ASSETS_SCHEMA.substring(index + 1);
+    }
+
     public Response get(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
         String baseUri = routerMatcher.getUri();
         String realUri = normalizeUri(session.getUri());
@@ -66,7 +71,7 @@ public class StaticPageHandler extends DefaultHandler {
             if (baseUri.startsWith(ANDDROID_ASSETS_SCHEMA)) {
                 //assets file
                 try {
-                    InputStream inputStream = EnlargeApplication.getInstance().getAssets().open("index.html");
+                    InputStream inputStream = EnlargeApplication.getInstance().getAssets().open(getAssetRoot() + "/index.html");
                     return Response.newChunkedResponse(getStatus(), getMimeTypeForFile("index.html"), inputStream);
                 } catch (FileNotFoundException e) {
                     return new IndexHandler().get(routerMatcher, urlParams, session);
@@ -90,7 +95,7 @@ public class StaticPageHandler extends DefaultHandler {
             if (baseUri.startsWith(ANDDROID_ASSETS_SCHEMA)) {
                 //assets file
                 try {
-                    InputStream inputStream = EnlargeApplication.getInstance().getAssets().open(realUri);
+                    InputStream inputStream = EnlargeApplication.getInstance().getAssets().open(getAssetRoot() + '/' + realUri);
                     return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(realUri), inputStream);
                 } catch (FileNotFoundException e) {
                     return new Error404UriHandler().get(routerMatcher, urlParams, session);

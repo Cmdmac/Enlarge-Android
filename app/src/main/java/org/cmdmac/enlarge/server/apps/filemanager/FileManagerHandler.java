@@ -1,6 +1,8 @@
 package org.cmdmac.enlarge.server.apps.filemanager;
 
 import android.graphics.Bitmap;
+import android.os.Environment;
+import android.text.TextUtils;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -77,6 +79,9 @@ public class FileManagerHandler {
 
     @RequestMapping(path= "list")
     public Response list(@Param(name = "dir", value = "/sdcard") String path) {
+        if (TextUtils.isEmpty(path)) {
+            path = Environment.getExternalStorageDirectory().getAbsolutePath();
+        }
         Dir d = new Dir(new java.io.File(path));
         String json = JSON.toJSONString(d);
         Response response = Response.newFixedLengthResponse(Status.OK, "application/json", json);

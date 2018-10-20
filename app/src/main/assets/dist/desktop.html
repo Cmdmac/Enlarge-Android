@@ -1,0 +1,487 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <title>JS山寨桌面窗口</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <style type="text/css" media="screen">
+        html, body, div {
+            margin: 0;
+            padding: 0;
+        }
+
+        html, body {
+            background: #FFFFFF;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #box {
+            position: absolute;
+            top: 30%;
+            left: 40%;
+            width: 250px;
+            height: 150px;
+            background: #EEE;
+            border: 1px solid #666;
+            border-radius: 8px;
+            box-shadow: 2px 2px 5px #777;
+        }
+
+        /*标题栏*/
+        #boxHeader {
+            width: 100%;
+            height: 30px;
+            background: none !important;
+            background: #EEE;
+            border-bottom: 2px solid #AAA;
+            border-radius: 5px 5px 0 0;
+        }
+
+        #button {
+            float: right;
+            width: 79px;
+            height: 15px;
+            margin: 5px 5px 0 0 !important;
+            margin: 5px 2px 0 0;
+            background: #CCC;
+            border-radius: 5px;
+        }
+
+        #button div {
+            float: left;
+            width: 25px;
+            height: 15px;
+            border-right: 2px #AAA solid;
+        }
+
+        #button .close {
+            border: none;
+            border-radius: 0px 5px 5px 0;
+        }
+
+        #button .minimize {
+            border-radius: 5px 0 0 5px;
+        }
+
+        /*八个方向*/
+        /*用于显示变栏颜色，作为测试
+        #boxN, #boxE, #boxS, #boxW {
+         background: red;
+        }
+        #boxNE, #boxES, #boxSW, #boxWN {
+         background: green;
+        }
+        */
+        #boxN {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        #boxE {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 5px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #boxS {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        #boxW {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 5px;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        #boxNE {
+            position: absolute;
+            right: 0;
+            top: 0;
+            width: 5px;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        #boxES {
+            position: absolute;
+            right: 0;
+            bottom: 0;
+            width: 5px;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        #boxSW {
+            position: absolute;
+            left: 0;
+            bottom: 0;
+            width: 5px;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        #boxWN {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 5px;
+            height: 5px;
+            overflow: hidden;
+        }
+
+        /*显示按钮*/
+        #showButton {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            margin: -75px 0 0 -75px;
+            width: 150px;
+            height: 150px;
+        }
+
+        #showButton span {
+            font: 50px bolder;
+        }
+
+        /*改变大小时的预览DIV*/
+        #virtualBox {
+            position: absolute;
+            background: #8EC6FF;
+            border: 1px solid #147AFF;
+            border-radius: 8px;
+            opacity: 0.4;
+            filter: alpha(opacity=40);
+        }
+    </style>
+    <script type="text/javascript">
+        //拖扯box函数
+        var dragDiv = function () {
+            var box = document.getElementById("box");
+            var boxHeader = document.getElementById("boxHeader");
+            var bDraging = false;
+            var disX = disY = 0;
+            //记录鼠标按下时距离box左、上边框距离
+            boxHeader.onmousedown = function (event) {
+                bDraging = true;
+                document.body.style.cursor = "move";
+                var event = event || window.event;
+                disX = event.clientX - box.offsetLeft;
+                disY = event.clientY - box.offsetTop;
+                //拖动box
+                document.onmousemove = function (event) {
+                    if (!bDraging) return false;
+                    document.body.style.cursor = "move";
+                    var event = event || window.event;
+                    var boxX = event.clientX - disX;
+                    var boxY = event.clientY - disY;
+                    var maxX = document.body.scrollWidth - box.offsetWidth;
+                    var maxY = document.body.offsetHeight - box.offsetHeight;
+                    boxX = (boxX < 0) ? 0 : boxX;
+                    boxY = (boxY < 0) ? 0 : boxY;
+                    boxX = (boxX > maxX) ? maxX : boxX;
+                    boxY = (boxY > maxY) ? maxY : boxY;
+                    box.style.left = boxX + "px";
+                    box.style.top = boxY + "px";
+                };
+                document.onmouseup = function () {
+                    bDraging = false;
+                    document.body.style.cursor = "";
+                };
+                return false;
+            };
+        };
+        var changeSize = function () {
+            var box = document.getElementById("box");
+            var virtualBox = document.getElementById("virtualBox");
+            var boxSide = document.getElementById("boxSide").getElementsByTagName("div");
+            var bSizeChanging = bMousedowning = false;
+            //box是否正在改变 & 鼠标是否正在按下
+            var originalWidth = box.offsetWidth;
+            //box最原始宽度
+            var originalHeight = box.offsetHeight;
+            //box最原始高度
+            for (var i = 0; i < boxSide.length; i++) {
+                //遍历boxside，监听鼠标
+                boxSide[i].index = i;
+                boxSide[i].onmouseover = function () {
+                    if (bMousedowning) return false;
+                    changeCursor(true, this.index);
+                };
+                boxSide[i].onmouseout = function () {
+                    if (bMousedowning) return false;
+                    changeCursor(false, this.index);
+                };
+                boxSide[i].onmousedown = function (event) {
+                    var event = event || window.event;
+                    var index = this.index;
+                    var aBoxPrevious = new Array();
+                    //记录box上一次的状态
+                    aBoxPrevious["clientX"] = event.clientX;
+                    aBoxPrevious["clientY"] = event.clientY;
+                    aBoxPrevious["left"] = box.offsetLeft;
+                    aBoxPrevious["top"] = box.offsetTop;
+                    aBoxPrevious["width"] = box.offsetWidth;
+                    aBoxPrevious["height"] = box.offsetHeight;
+                    bMousedowning = true;
+                    bSizeChanging = true;
+                    showVirtualBox(virtualBox, aBoxPrevious);
+                    document.onmousemove = function (event) {
+                        if (!bSizeChanging) return false;
+                        changeVirtualBoxSize(event, aBoxPrevious, index);
+                    };
+                    document.onmouseup = function () {
+                        changeBoxSize(virtualBox)
+                        hideVirtualBox(virtualBox);
+                        bSizeChanging = false;
+                        bMousedowning = false;
+                        changeCursor(false, index);
+                    };
+                    return false;
+                };
+            }
+            //改变鼠标指针样式
+            var changeCursor = function (bIsShowing, index) {
+                if (bIsShowing) {
+                    var cursorStyle = ["n-resize", "e-resize", "s-resize", "w-resize", "ne-resize", "se-resize", "sw-resize", "nw-resize"];
+                    document.body.style.cursor = cursorStyle[index];
+                }
+                else {
+                    document.body.style.cursor = "";
+                }
+            };
+            //显示预览DIV
+            var showVirtualBox = function (virtualBox, aBoxPrevious) {
+                with (virtualBox.style) {
+                    display = "block";
+                    top = aBoxPrevious["top"] + "px";
+                    left = aBoxPrevious["left"] + "px";
+                    width = aBoxPrevious["width"] + "px";
+                    height = aBoxPrevious["height"] + "px";
+                }
+            }
+            //隐藏预览DIV
+            var hideVirtualBox = function (virtualBox) {
+                virtualBox.style.display = "none";
+            }
+            //改变box大小
+            var changeVirtualBoxSize = function (event, aBoxPrevious, index) {
+                var event = event || window.event;
+                var bTop = bRight = bBottom = bLeft = false;
+                //八个方向，分别为N、E、S、W、NE、SW、SW、NW
+                switch (index) {
+                    case 0:
+                        bTop = true;
+                        break;
+                    case 1:
+                        bRight = true;
+                        break;
+                    case 2:
+                        bBottom = true;
+                        break;
+                    case 3:
+                        bLeft = true;
+                        break;
+                    case 4:
+                        bTop = bRight = true;
+                        ;
+                        break;
+                    case 5:
+                        bRight = bBottom = true;
+                        break;
+                    case 6:
+                        bBottom = bLeft = true;
+                        break;
+                    case 7:
+                        bLeft = bTop = true;
+                        break;
+                    default:
+                        break;
+                }
+                //向北改变高度
+                if (bTop) {
+                    var newTopHeight = aBoxPrevious["height"] - (event.clientY - aBoxPrevious["clientY"]);
+                    (newTopHeight < originalHeight) && (newTopHeight = originalHeight);
+                    (newTopHeight > aBoxPrevious["top"] + aBoxPrevious["height"]) && (newTopHeight = aBoxPrevious["top"] + aBoxPrevious["height"]);
+                    var newTop = aBoxPrevious["top"] + (event.clientY - aBoxPrevious["clientY"]);
+                    (newTop > aBoxPrevious["top"] + aBoxPrevious["height"] - originalHeight) && (newTop = aBoxPrevious["top"] + aBoxPrevious["height"] - originalHeight);
+                    (newTop < 0) && (newTop = 0);
+                    virtualBox.style.top = newTop + "px";
+                    virtualBox.style.height = newTopHeight - box.clientTop * 2 + "px";
+                    //不能忽略border-width
+                    bTop = false;
+                }
+                //向东改变宽度
+                if (bRight) {
+                    var newRightWidth = aBoxPrevious["width"] + (event.clientX - aBoxPrevious["clientX"]);
+                    (newRightWidth < originalWidth) && (newRightWidth = originalWidth);
+                    (newRightWidth > document.body.scrollWidth - aBoxPrevious["left"]) && (newRightWidth = document.body.scrollWidth - aBoxPrevious["left"]);
+                    virtualBox.style.width = newRightWidth - box.clientTop * 2 + "px";
+                    bRight = false;
+                }
+                //向南改变高度
+                if (bBottom) {
+                    var newBottomHeight = aBoxPrevious["height"] + (event.clientY - aBoxPrevious["clientY"]);
+                    (newBottomHeight < originalHeight) && (newBottomHeight = originalHeight);
+                    (newBottomHeight > document.body.scrollHeight - aBoxPrevious["top"]) && (newBottomHeight = document.body.scrollHeight - aBoxPrevious["top"]);
+                    virtualBox.style.height = newBottomHeight - box.clientTop * 2 + "px";
+                    bBottom = false;
+                }
+                //向西改变宽度
+                if (bLeft) {
+                    var newLeftWidth = aBoxPrevious["width"] - (event.clientX - aBoxPrevious["clientX"]);
+                    (newLeftWidth < originalWidth) && (newLeftWidth = originalWidth);
+                    (newLeftWidth > aBoxPrevious["left"] + aBoxPrevious["width"]) && (newLeftWidth = aBoxPrevious["left"] + aBoxPrevious["width"]);
+                    var newLeft = aBoxPrevious["left"] + (event.clientX - aBoxPrevious["clientX"]);
+                    (newLeft > aBoxPrevious["left"] + aBoxPrevious["width"] - originalWidth) && (newLeft = aBoxPrevious["left"] + aBoxPrevious["width"] - originalWidth);
+                    (newLeft < 0) && (newLeft = 0);
+                    virtualBox.style.left = newLeft + "px";
+                    virtualBox.style.width = newLeftWidth - box.clientLeft * 2 + "px";
+                    bLeft = false;
+                }
+            };
+            var changeBoxSize = function (virtualBox) {
+                with (box.style) {
+                    left = virtualBox.style.left;
+                    top = virtualBox.style.top;
+                    width = virtualBox.style.width;
+                    height = virtualBox.style.height;
+                }
+            }
+        };
+        //窗口按钮函数
+        boxButton = function () {
+            var box = document.getElementById("box");
+            var boxHeader = document.getElementById("boxHeader");
+            var aButton = document.getElementById("button").getElementsByTagName("div");
+            var showButton = document.getElementById("showButton");
+            var span = showButton.getElementsByTagName("span")[0];
+            var bIsMin = bIsMax = false;
+            //目前状态是否最小 or 最大
+            boxHeader.ondblclick = function () {
+                maximize();
+            }
+            for (var i = 0; i < aButton.length; i++) {
+                aButton[i].index = i;
+                aButton[i].onmouseover = function () {
+                    aButton[this.index].style.background = "#AAA";
+                    document.body.style.cursor = "pointer";
+                };
+                aButton[i].onmouseout = function () {
+                    aButton[this.index].style.background = "";
+                    document.body.style.cursor = ""
+                };
+                aButton[i].onclick = function () {
+                    switch (this.index) {
+                        case 0:
+                            minimize();
+                            break;
+                        case 1:
+                            maximize();
+                            break;
+                        case 2:
+                            close();
+                            break;
+                        default:
+                            break;
+                    }
+                };
+            }
+            var minimize = function () {
+                if (bIsMin) {
+                    resumeBox();
+                    bIsMin = false;
+                }
+                else {
+                    box.style.width = "89px";
+                    box.style.height = "32px";
+                    box.style.left = "2%";
+                    box.style.top = document.body.offsetHeight - box.offsetHeight - 15 + "px";
+                    bIsMin = true;
+                    bIsMax = false;
+                }
+            };
+            var maximize = function () {
+                if (bIsMax) {
+                    resumeBox();
+                    bIsMax = false;
+                }
+                else {
+                    box.style.width = document.body.scrollWidth - 10 + "px";
+                    box.style.height = document.body.scrollHeight - 10 + "px";
+                    box.style.left = "5px";
+                    box.style.top = "5px";
+                    bIsMax = true;
+                    bIsMin = false;
+                }
+            };
+            var close = function () {
+                box.style.display = "none";
+                showButton.style.display = "block";
+            };
+            var resumeBox = function () {
+                box.style.top = "30%";
+                box.style.left = "40%";
+                box.style.width = "250px";
+                box.style.height = "150px";
+            };
+            showButton.onmousedown = function () {
+                span.innerHTML = "^o^";
+            };
+            showButton.onclick = function () {
+                this.style.display = "none";
+                span.innerHTML = ">_<";
+                resumeBox();
+                box.style.display = "block";
+            };
+        };
+        window.onload = function () {
+            changeSize();
+            dragDiv();
+            boxButton();
+        };
+    </script>
+</head>
+<body>
+<div id="box">
+    <div id="boxHeader">
+        <div id="button">
+            <div class="minimize"></div>
+            <div class="maximize"></div>
+            <div class="close"></div>
+        </div>
+    </div>
+    <div id="boxSide">
+        <div id="boxN"></div>
+        <div id="boxE"></div>
+        <div id="boxS"></div>
+        <div id="boxW"></div>
+        <div id="boxNE"></div>
+        <div id="boxES"></div>
+        <div id="boxSW"></div>
+        <div id="boxWN"></div>
+    </div>
+</div>
+<button id="showButton"><span>>_<</span>
+    <p>居然关掉人家，讨厌~</p>
+    <p>快打开</p></button>
+<div id="virtualBox"></div>
+</body>
+</html>
