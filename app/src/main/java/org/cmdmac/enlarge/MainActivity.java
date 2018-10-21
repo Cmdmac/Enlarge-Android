@@ -1,20 +1,28 @@
 package org.cmdmac.enlarge;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
+import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.zxing.client.android.CaptureActivity;
 
@@ -36,6 +44,7 @@ import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity implements AppNanolets.PermissionEntries.OnPermissonChange {
 
+    PermissionChecker mPermissionChecker;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,6 +54,17 @@ public class MainActivity extends AppCompatActivity implements AppNanolets.Permi
         AppNanolets.start(this);
 
         AppNanolets.PermissionEntries.setPermissionChangeListener(this);
+
+
+//        if (!hasPermission(permissions[1])) {
+//            showDialogTipUserRequestPermission();
+//        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        mPermissionChecker.onActivityResult(requestCode, resultCode, data);
     }
 
     public void onClick(View v) {
@@ -53,8 +73,24 @@ public class MainActivity extends AppCompatActivity implements AppNanolets.Permi
                 AppNanolets.start(this);
                 break;
             case R.id.scan:
-                Intent intent = new Intent(this, CaptureActivity.class);
-                startActivity(intent);
+                PermissionChecker.PermiisonSetting setting = new PermissionChecker.PermiisonSetting();
+                setting.permission = Manifest.permission.CAMERA;
+                setting.REQUEST_TITLE = "拍照权限不可用";
+                setting.REQUEST_MESSAGE = "Enlarge-Android需要拍照权限扫描二维码登录，是否允许开启拍照权限？";
+                mPermissionChecker = new PermissionChecker(this, setting, new PermissionChecker.Callback() {
+                    @Override
+                    public void onAllow() {
+                        Intent intent = new Intent(MainActivity.this, CaptureActivity.class);
+                        startActivity(intent);
+                    }
+
+                    @Override
+                    public void onDeny() {
+
+                    }
+                });
+                mPermissionChecker.check();
+
                 break;
         }
     }
@@ -75,4 +111,6 @@ public class MainActivity extends AppCompatActivity implements AppNanolets.Permi
         });
 
     }
+
+
 }
