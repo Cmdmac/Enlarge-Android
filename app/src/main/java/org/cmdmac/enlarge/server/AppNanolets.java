@@ -51,8 +51,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cmdmac.enlarge.server.controllers.calendar.CalendarHandler;
 import org.cmdmac.enlarge.server.controllers.desktop.DesktopHandler;
 import org.cmdmac.enlarge.server.controllers.filemanager.FileManagerHandler;
+import org.cmdmac.enlarge.server.controllers.phone.PhoneHandler;
+import org.cmdmac.enlarge.server.controllers.photo.PhotoHandler;
 import org.cmdmac.enlarge.server.serverlets.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
@@ -72,7 +75,8 @@ public class AppNanolets extends RouterNanoHTTPD {
     //    private static boolean ENABLE_REMOTE_CONNECT = false;
     public static final int PORT = 9090;
 
-    public static Class<?>[] DESKTOP_APPS = new Class[] {FileManagerHandler.class};
+    public static Class<?>[] DESKTOP_APPS = new Class[] {FileManagerHandler.class, CalendarHandler.class, PhoneHandler.class,
+            PhotoHandler.class};
 
     private PermissionProcesser permissionProcesser;
 
