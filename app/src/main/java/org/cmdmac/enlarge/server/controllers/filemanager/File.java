@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.apps.filemanager;
+package org.cmdmac.enlarge.server.controllers.filemanager;
 
 /**
  * Created by fengzhiping on 2018/10/12.

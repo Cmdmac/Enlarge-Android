@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.apps.filemanager;
+package org.cmdmac.enlarge.server.controllers.filemanager;
 
 import android.graphics.Bitmap;
 import android.os.Environment;
@@ -21,7 +21,7 @@ import java.io.File;
  * Created by fengzhiping on 2018/10/12.
  */
 @Controller(name = "filemanager")
-@DesktopApp(name = "FileManager", icon = "images/compatible_chrome.png")
+@DesktopApp(name = "FileManager", icon = "images/ic_launcher_document.png")
 public class FileManagerHandler {
 //    @Override
 //    public String getMimeType() {

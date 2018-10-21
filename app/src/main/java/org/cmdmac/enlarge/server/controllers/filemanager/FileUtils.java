@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.apps.filemanager;
+package org.cmdmac.enlarge.server.controllers.filemanager;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;

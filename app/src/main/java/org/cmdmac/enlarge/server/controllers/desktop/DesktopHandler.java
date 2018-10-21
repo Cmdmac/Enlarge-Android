@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.apps.desktop;
+package org.cmdmac.enlarge.server.controllers.desktop;
 
 import org.cmdmac.enlarge.server.AppNanolets;
 import org.cmdmac.enlarge.server.annotation.Controller;

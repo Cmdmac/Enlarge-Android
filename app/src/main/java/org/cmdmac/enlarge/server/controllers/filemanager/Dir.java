@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.apps.filemanager;
+package org.cmdmac.enlarge.server.controllers.filemanager;
 
 import java.util.ArrayList;
 

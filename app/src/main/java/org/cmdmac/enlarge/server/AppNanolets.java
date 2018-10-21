@@ -51,9 +51,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cmdmac.enlarge.server.apps.desktop.DesktopHandler;
-import org.cmdmac.enlarge.server.apps.filemanager.FileManagerHandler;
-import org.cmdmac.enlarge.server.handlers.StaticPageHandler;
+import org.cmdmac.enlarge.server.controllers.desktop.DesktopHandler;
+import org.cmdmac.enlarge.server.controllers.filemanager.FileManagerHandler;
 import org.cmdmac.enlarge.server.serverlets.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
