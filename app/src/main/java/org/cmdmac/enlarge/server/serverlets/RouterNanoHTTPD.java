@@ -44,14 +44,15 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Logger;
 
-import org.cmdmac.enlarge.server.annotation.Controller;
-import org.cmdmac.enlarge.server.annotation.Param;
-import org.cmdmac.enlarge.server.annotation.RequestMapping;
+import org.cmdmac.enlarge.server.annotations.Controller;
+import org.cmdmac.enlarge.server.annotations.Param;
+import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.cmdmac.enlarge.server.handlers.DefaultHandler;
 import org.cmdmac.enlarge.server.handlers.Error404UriHandler;
 import org.cmdmac.enlarge.server.handlers.IndexHandler;
 import org.cmdmac.enlarge.server.handlers.NotImplementedHandler;
 import org.cmdmac.enlarge.server.handlers.StaticPageHandler;
+import org.cmdmac.enlarge.server.pocessor.ControllerRouter;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.websockets.NanoWSD;
@@ -60,7 +61,7 @@ import org.nanohttpd.protocols.websockets.NanoWSD;
  * @author vnnv
  * @author ritchieGitHub
  */
-public abstract class RouterNanoHTTPD extends NanoWSD {
+public abstract class RouterNanoHTTPD extends NanoWSD implements ControllerRouter {
 
     /**
      * logger to log to.

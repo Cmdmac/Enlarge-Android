@@ -1,6 +1,4 @@
-package org.cmdmac.enlarge.server.annotation;
-
-import org.nanohttpd.protocols.http.request.Method;
+package org.cmdmac.enlarge.server.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -10,10 +8,9 @@ import java.lang.annotation.Target;
 /**
  * Created by fengzhiping on 2018/10/20.
  */
-
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface RequestMapping {
-    String path() default "";
-    Method method() default Method.GET;
+@Target(ElementType.TYPE)
+public @interface Controller {
+    String name() default "/";
+    boolean needPermissonControl() default true;
 }

@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.annotation;
+package org.cmdmac.enlarge.server.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

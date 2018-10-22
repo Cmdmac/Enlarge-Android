@@ -1,9 +1,9 @@
 package org.cmdmac.enlarge.server.controllers.desktop;
 
 import org.cmdmac.enlarge.server.AppNanolets;
-import org.cmdmac.enlarge.server.annotation.Controller;
-import org.cmdmac.enlarge.server.annotation.DesktopApp;
-import org.cmdmac.enlarge.server.annotation.RequestMapping;
+import org.cmdmac.enlarge.server.annotations.Controller;
+import org.cmdmac.enlarge.server.annotations.DesktopApp;
+import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.nanohttpd.protocols.http.response.Response;

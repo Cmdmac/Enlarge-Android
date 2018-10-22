@@ -1,7 +1,7 @@
 package org.cmdmac.enlarge.server.controllers.photo;
 
-import org.cmdmac.enlarge.server.annotation.Controller;
-import org.cmdmac.enlarge.server.annotation.DesktopApp;
+import org.cmdmac.enlarge.server.annotations.Controller;
+import org.cmdmac.enlarge.server.annotations.DesktopApp;
 
 /**
  * Created by fengzhiping on 2018/10/21.

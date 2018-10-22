@@ -7,10 +7,10 @@ import android.text.TextUtils;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
-import org.cmdmac.enlarge.server.annotation.Controller;
-import org.cmdmac.enlarge.server.annotation.DesktopApp;
-import org.cmdmac.enlarge.server.annotation.Param;
-import org.cmdmac.enlarge.server.annotation.RequestMapping;
+import org.cmdmac.enlarge.server.annotations.Controller;
+import org.cmdmac.enlarge.server.annotations.DesktopApp;
+import org.cmdmac.enlarge.server.annotations.Param;
+import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.http.response.Status;
 

@@ -3,7 +3,7 @@ package org.cmdmac.enlarge.server.serverlets;
 import android.text.TextUtils;
 
 import org.cmdmac.enlarge.server.AppNanolets;
-import org.cmdmac.enlarge.server.annotation.Param;
+import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.handlers.DefaultHandler;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;

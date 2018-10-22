@@ -172,8 +172,7 @@ public class AppNanolets extends RouterNanoHTTPD {
 //        addRoute("/filemanager/delete", FileManagerHandler.class);
 //        addRoute("/sdcard", StaticPageHandler.class);
 
-        addController(FileManagerHandler.class);
-        addController(DesktopHandler.class);
+        ControllerRegister.register(this);
     }
 
     /**
