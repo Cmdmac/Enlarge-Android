@@ -3,6 +3,7 @@ apply plugin: 'java'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
+    compileOnly fileTree(dir: '../app/libs', includes: ['*.jar'])
     implementation 'com.google.auto.service:auto-service:1.0-rc3'
     implementation 'com.squareup:javapoet:1.9.0'
     compile project(path: ':Annotations')

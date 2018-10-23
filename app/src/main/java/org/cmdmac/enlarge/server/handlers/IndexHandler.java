@@ -32,7 +32,7 @@ public class IndexHandler extends DefaultHandler {
     }
 
     @Override
-    public Response get(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
-        return super.get(routerMatcher, urlParams, session);
+    public Response process(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
+        return super.process(routerMatcher, urlParams, session);
     }
 }

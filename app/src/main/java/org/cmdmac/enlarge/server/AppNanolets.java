@@ -141,19 +141,11 @@ public class AppNanolets extends RouterNanoHTTPD {
         return new EnlargeWebSocket(this, ihttpSession, permissionProcesser);
     }
 
-    private static class AppRouter extends UriRouter {
-
-        @Override
-        public Response process(IHTTPSession session) {
-            return super.process(session);
-        }
-    }
-
     /**
      * Create the server instance
      */
     public AppNanolets(PermissionProcesser listener) throws IOException {
-        super(PORT, new AppRouter());
+        super(PORT);
         addMappings();
         this.permissionProcesser = listener;
         System.out.println("\nRunning! Point your browers to http://localhost:" + PORT + "/ \n");
@@ -172,7 +164,7 @@ public class AppNanolets extends RouterNanoHTTPD {
 //        addRoute("/filemanager/delete", FileManagerHandler.class);
 //        addRoute("/sdcard", StaticPageHandler.class);
 
-        ControllerRegister.register(this);
+//        ControllerRegister.inject(this);
     }
 
     /**

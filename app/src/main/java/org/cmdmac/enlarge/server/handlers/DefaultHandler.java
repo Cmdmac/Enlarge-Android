@@ -20,7 +20,7 @@ public abstract class DefaultHandler {
     public abstract String getMimeType();
     public abstract IStatus getStatus();
 
-    public Response get(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
+    public Response process(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
         return Response.newFixedLengthResponse(getStatus(), getMimeType(), getText());
     }
 

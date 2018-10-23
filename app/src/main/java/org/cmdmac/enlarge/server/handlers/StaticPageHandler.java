@@ -62,8 +62,8 @@ public class StaticPageHandler extends DefaultHandler {
         return ANDDROID_ASSETS_SCHEMA.substring(index + 1);
     }
 
-    public Response get(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
-        String baseUri = routerMatcher.getUri();
+    public Response process(RouterMatcher routerMatcher, Map<String, String> urlParams, IHTTPSession session) {
+        String baseUri = STATIC_DIRECTORY;//routerMatcher.getUri();
         String realUri = normalizeUri(session.getUri());
 
         if (TextUtils.isEmpty(realUri)) {
@@ -74,7 +74,7 @@ public class StaticPageHandler extends DefaultHandler {
                     InputStream inputStream = EnlargeApplication.getInstance().getAssets().open(getAssetRoot() + "/index.html");
                     return Response.newChunkedResponse(getStatus(), getMimeTypeForFile("index.html"), inputStream);
                 } catch (FileNotFoundException e) {
-                    return new IndexHandler().get(routerMatcher, urlParams, session);
+                    return new IndexHandler().process(routerMatcher, urlParams, session);
                 } catch (IOException e) {
                     return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
                 }
@@ -82,7 +82,7 @@ public class StaticPageHandler extends DefaultHandler {
                 File index = new File(baseUri, "index.html");
                 if (!index.exists()) {
                     // not find index.html, return default IndexHandler
-                    return new IndexHandler().get(routerMatcher, urlParams, session);
+                    return new IndexHandler().process(routerMatcher, urlParams, session);
                 } else {
                     try {
                         return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(index.getName()), fileToInputStream(index));
@@ -98,14 +98,14 @@ public class StaticPageHandler extends DefaultHandler {
                     InputStream inputStream = EnlargeApplication.getInstance().getAssets().open(getAssetRoot() + '/' + realUri);
                     return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(realUri), inputStream);
                 } catch (FileNotFoundException e) {
-                    return new Error404UriHandler().get(routerMatcher, urlParams, session);
+                    return new Error404UriHandler().process(routerMatcher, urlParams, session);
                 } catch (IOException e) {
                     return Response.newFixedLengthResponse(Status.REQUEST_TIMEOUT, "text/plain", (String) null);
                 }
             } else {
                 File f = new File(baseUri, realUri);
                 if (!f.exists() || !f.isFile()) {
-                    return new Error404UriHandler().get(routerMatcher, urlParams, session);
+                    return new Error404UriHandler().process(routerMatcher, urlParams, session);
                 } else {
                     try {
                         return Response.newChunkedResponse(getStatus(), getMimeTypeForFile(f.getName()), fileToInputStream(f));

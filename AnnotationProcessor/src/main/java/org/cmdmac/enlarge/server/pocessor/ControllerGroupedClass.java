@@ -37,10 +37,10 @@ public class ControllerGroupedClass {
 
         String packageName = "org.cmdmac.enlarge.server";//pkg.isUnnamed() ? null : pkg.getQualifiedName().toString();
 
-        MethodSpec.Builder method = MethodSpec.methodBuilder("register")
+        MethodSpec.Builder method = MethodSpec.methodBuilder("inject")
                 .addModifiers(Modifier.PUBLIC)
                 .addModifiers(Modifier.STATIC)
-                .addParameter(ControllerRouter.class, "router")
+                .addParameter(IRouter.class, "router")
                 .returns(TypeName.get(void.class));
 
         // check if id is null
@@ -49,9 +49,9 @@ public class ControllerGroupedClass {
 //                .endControlFlow();
 
         for (ControllerAnnotatedClass annotatedClass : list) {
-            method.addStatement("router.addController(" + annotatedClass.getTypeElement() + ".class)");
+            method.addStatement("router.addRoute(" + annotatedClass.getTypeElement() + ".class)");
         }
-        TypeSpec typeSpec = TypeSpec.classBuilder("ControllerRegister").addMethod(method.build()).build();
+        TypeSpec typeSpec = TypeSpec.classBuilder("ControllerInject").addModifiers(Modifier.PUBLIC).addMethod(method.build()).build();
         // Write file
         JavaFile.builder(packageName, typeSpec).build().writeTo(filer);
     }

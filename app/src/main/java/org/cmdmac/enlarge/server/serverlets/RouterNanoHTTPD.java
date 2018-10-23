@@ -33,6 +33,8 @@ package org.cmdmac.enlarge.server.serverlets;
  * #L%
  */
 
+import android.content.UriMatcher;
+
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
@@ -44,6 +46,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.logging.Logger;
 
+import org.cmdmac.enlarge.server.ControllerInject;
 import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
@@ -52,7 +55,7 @@ import org.cmdmac.enlarge.server.handlers.Error404UriHandler;
 import org.cmdmac.enlarge.server.handlers.IndexHandler;
 import org.cmdmac.enlarge.server.handlers.NotImplementedHandler;
 import org.cmdmac.enlarge.server.handlers.StaticPageHandler;
-import org.cmdmac.enlarge.server.pocessor.ControllerRouter;
+import org.cmdmac.enlarge.server.pocessor.IRouter;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.websockets.NanoWSD;
@@ -61,62 +64,28 @@ import org.nanohttpd.protocols.websockets.NanoWSD;
  * @author vnnv
  * @author ritchieGitHub
  */
-public abstract class RouterNanoHTTPD extends NanoWSD implements ControllerRouter {
+public abstract class RouterNanoHTTPD extends NanoWSD {
 
     /**
      * logger to log to.
      */
     private static final Logger LOG = Logger.getLogger(RouterNanoHTTPD.class.getName());
 
-    public static interface IRoutePrioritizer {
+    public static abstract class BaseRouter implements IRouter {
+        protected Collection<RouterMatcher> mappings;
 
-        void addRoute(String url, int priority, Class<?> handler, Object... initParameter);
-
-        void removeRoute(String url);
-
-        void addController(Class<?> controller);
-
-        Collection<RouterMatcher> getPrioritizedRoutes();
-
-        void setNotImplemented(Class<?> notImplemented);
-    }
-
-    public static class RequestMappingParams {
-        public String path;
-        public Class<?> handler;
-        public org.nanohttpd.protocols.http.request.Method method;
-        public Method methodReflect;
-        public ArrayList<Param> params;
-        public boolean needPermissionControl = true;
-    }
-
-    public static abstract class BaseRoutePrioritizer implements IRoutePrioritizer {
-
-        protected Class<?> notImplemented;
-
-        protected final Collection<RouterMatcher> mappings;
-
-        public BaseRoutePrioritizer() {
-            this.mappings = newMappingCollection();
-            this.notImplemented = NotImplementedHandler.class;
+        public BaseRouter() {
+            mappings = new ArrayList<>();
         }
 
         @Override
-        public void addRoute(String url, int priority, Class<?> handler, Object... initParameter) {
+        public void addRoute(String url, /*int priority,*/ Class<?> handler) {
             if (url != null) {
-                if (handler != null) {
-                    mappings.add(new RouterMatcher(url, priority + mappings.size(), handler, initParameter));
-                } else {
-                    mappings.add(new RouterMatcher(url, priority + mappings.size(), notImplemented));
-                }
+                mappings.add(new RouterMatcher(url, /*priority + mappings.size(),*/ handler));
             }
         }
 
-        public void addRoute(RequestMappingParams requestMappingParams) {
-            RouterMatcher resource = new RouterMatcher(requestMappingParams);
-            mappings.add(resource);
-        }
-
+        @Override
         public void removeRoute(String url) {
             String uriToDelete = DefaultHandler.normalizeUri(url);
             Iterator<RouterMatcher> iter = mappings.iterator();
@@ -129,21 +98,59 @@ public abstract class RouterNanoHTTPD extends NanoWSD implements ControllerRoute
             }
         }
 
-        @Override
-        public Collection<RouterMatcher> getPrioritizedRoutes() {
-            return Collections.unmodifiableCollection(mappings);
+        public Response process(IHTTPSession session) {
+            String work = DefaultHandler.normalizeUri(session.getUri());
+            Map<String, String> params = null;
+            for (RouterMatcher u : mappings) {
+                params = u.match(work);
+                if (params != null) {
+                    return u.process(params, session);
+                }
+            }
+            return null;
+        }
+    }
+    public static class UriRouter extends BaseRouter {
+
+        RouterMatcher mStaticMatcher = new RouterMatcher("", StaticPageHandler.class);
+        public UriRouter() {
+            super();
+//            addRoute(StaticPageHandler.class);
+            mappings.add(mStaticMatcher);
         }
 
         @Override
-        public void setNotImplemented(Class<?> handler) {
-            notImplemented = handler;
+        public void addRoute(Class<?> handler) {
+            mappings.add(new RouterMatcher("/", handler));
         }
 
-        protected abstract Collection<RouterMatcher> newMappingCollection();
+        public void addRoute(String url, Class<?> handler) {
+            mappings.add(new RouterMatcher(url, handler));
+        }
 
         @Override
-        public void addController(Class<?> controller) {
-            // has controller annotation
+        public Response process(IHTTPSession session) {
+            Response response = super.process(session);
+            if (response == null) {
+                return mStaticMatcher.process(null, session);
+            } else {
+                return response;
+            }
+        }
+    }
+
+    static class ControllerRouter extends BaseRouter {
+
+        public ControllerRouter() {
+            super();
+            //add controllers
+            ControllerInject.inject(this);
+        }
+
+        @Override
+        public void addRoute(Class<?> controller) {
+//            super.addRoute(handler);
+// has controller annotation
             if (controller.isAnnotationPresent(Controller.class)) {
                 Controller controllerAnnotation = controller.getAnnotation(Controller.class);
                 String name = controllerAnnotation.name();
@@ -166,7 +173,7 @@ public abstract class RouterNanoHTTPD extends NanoWSD implements ControllerRoute
                                 params.add(p);
                             }
                         }
-                        RequestMappingParams requestMappingParams = new RequestMappingParams();
+                        ControllerMatcher.RequestMappingParams requestMappingParams = new ControllerMatcher.RequestMappingParams();
                         requestMappingParams.path = fullPath;
                         requestMappingParams.handler = controller;
                         requestMappingParams.method = m;
@@ -178,125 +185,28 @@ public abstract class RouterNanoHTTPD extends NanoWSD implements ControllerRoute
                 }
             }
         }
-    }
 
-    public static class ProvidedPriorityRoutePrioritizer extends BaseRoutePrioritizer {
-
-        @Override
-        public void addRoute(String url, int priority, Class<?> handler, Object... initParameter) {
-            if (url != null) {
-                RouterMatcher resource = null;
-                if (handler != null) {
-                    resource = new RouterMatcher(url, handler, initParameter);
-                } else {
-                    resource = new RouterMatcher(url, handler, notImplemented);
-                }
-
-                resource.setPriority(priority);
-                mappings.add(resource);
-            }
-        }
-
-        @Override
-        protected Collection<RouterMatcher> newMappingCollection() {
-            return new PriorityQueue<RouterMatcher>();
+        public void addRoute(ControllerMatcher.RequestMappingParams requestMappingParams) {
+            RouterMatcher resource = new ControllerMatcher(requestMappingParams);
+            mappings.add(resource);
         }
 
     }
 
-    public static class DefaultRoutePrioritizer extends BaseRoutePrioritizer {
+    private ArrayList<BaseRouter> routers;
 
-        protected Collection<RouterMatcher> newMappingCollection() {
-            return new PriorityQueue<RouterMatcher>();
-        }
-
-    }
-
-    public static class InsertionOrderRoutePrioritizer extends BaseRoutePrioritizer {
-
-        protected Collection<RouterMatcher> newMappingCollection() {
-            return new ArrayList<RouterMatcher>();
-        }
-    }
-
-    public static class UriRouter {
-
-        private RouterMatcher error404Url;
-        private RouterMatcher staticUrl;
-
-        private IRoutePrioritizer routePrioritizer;
-
-        public UriRouter() {
-            this.routePrioritizer = new DefaultRoutePrioritizer();
-        }
-
-        /**
-         * Search in the mappings if the given url matches some of the rules If
-         * there are more than one marches returns the rule with less parameters
-         * e.g. mapping 1 = /user/:id mapping 2 = /user/help if the incoming uri
-         * is www.example.com/user/help - mapping 2 is returned if the incoming
-         * uri is www.example.com/user/3232 - mapping 1 is returned
-         * 
-         * @param url
-         * @return
-         */
-        public Response process(IHTTPSession session) {
-            String work = DefaultHandler.normalizeUri(session.getUri());
-            Map<String, String> params = null;
-            RouterMatcher routerMatcher = staticUrl;
-            for (RouterMatcher u : routePrioritizer.getPrioritizedRoutes()) {
-                params = u.match(work);
-                if (params != null) {
-                    routerMatcher = u;
-                    break;
-                }
-            }
-
-            return routerMatcher.process(params, session);
-        }
-
-        private void addRoute(String url, int priority, Class<?> handler, Object... initParameter) {
-            routePrioritizer.addRoute(url, priority, handler, initParameter);
-        }
-
-        private void removeRoute(String url) {
-            routePrioritizer.removeRoute(url);
-        }
-
-        public void addController(Class<?> controller) {
-            routePrioritizer.addController(controller);
-        }
-
-        public void setNotFoundHandler(Class<?> handler) {
-            error404Url = new RouterMatcher(null, 100, handler);
-        }
-
-        public void setStaticHandler(Class<?> handler) {
-            staticUrl = new RouterMatcher(StaticPageHandler.STATIC_DIRECTORY, 100, handler);
-        }
-
-        public void setNotImplemented(Class<?> handler) {
-            routePrioritizer.setNotImplemented(handler);
-        }
-
-        public void setRoutePrioritizer(IRoutePrioritizer routePrioritizer) {
-            this.routePrioritizer = routePrioritizer;
-        }
-
-    }
-
-    private UriRouter router;
-
-    public RouterNanoHTTPD(int port, UriRouter router) {
+    public RouterNanoHTTPD(int port) {
         super(port);
-//        router = new RouterMatcher();
-        this.router = router;
+        routers = new ArrayList<>();
+        routers.add(new ControllerRouter());
+        routers.add(new UriRouter());
     }
 
-    public RouterNanoHTTPD(String hostname, int port, UriRouter router) {
+    public RouterNanoHTTPD(String hostname, int port) {
         super(hostname, port);
-//        router = new RouterMatcher();
-        this.router = router;
+        routers = new ArrayList<>();
+        routers.add(new ControllerRouter());
+        routers.add(new UriRouter());
     }
 
     /**
@@ -308,40 +218,26 @@ public abstract class RouterNanoHTTPD extends NanoWSD implements ControllerRoute
      */
 
     public void addMappings() {
-        router.setNotImplemented(NotImplementedHandler.class);
-        router.setNotFoundHandler(Error404UriHandler.class);
-        router.setStaticHandler(StaticPageHandler.class);
-//        router.addRoute("/", Integer.MAX_VALUE / 2, IndexHandler.class);
-        router.addRoute("/index.html", Integer.MAX_VALUE / 2, IndexHandler.class);
+//        router.setNotImplemented(NotImplementedHandler.class);
+//        router.setNotFoundHandler(Error404UriHandler.class);
+//        router.setStaticHandler(StaticPageHandler.class);
+////        router.addRoute("/", Integer.MAX_VALUE / 2, IndexHandler.class);
+//        router.addRoute("/index.html", Integer.MAX_VALUE / 2, IndexHandler.class);
     }
 
-    public void addRoute(String url, Class<?> handler, Object... initParameter) {
-        router.addRoute(url, 100, handler, initParameter);
-    }
-
-    public void addController(Class<?> controller) {
-        router.addController(controller);
-    }
-
-    public <T extends DefaultHandler> void setNotImplementedHandler(Class<T> handler) {
-        router.setNotImplemented(handler);
-    }
-
-    public <T extends DefaultHandler> void setNotFoundHandler(Class<T> handler) {
-        router.setNotFoundHandler(handler);
-    }
-
-    public void removeRoute(String url) {
-        router.removeRoute(url);
-    }
-
-    public void setRoutePrioritizer(IRoutePrioritizer routePrioritizer) {
-        router.setRoutePrioritizer(routePrioritizer);
-    }
+//    public void addRoute(String url, Class<?> handler, Object... initParameter) {
+//        router.addRoute(url, 100, handler, initParameter);
+//    }
 
     @Override
     public Response serve(IHTTPSession session) {
         // Try to find match
-        return router.process(session);
+        for (BaseRouter router : routers) {
+            Response response = router.process(session);
+            if (response != null) {
+                return response;
+            }
+        }
+        return null;
     }
 }
