@@ -33,17 +33,13 @@ package org.cmdmac.enlarge.server.serverlets;
  * #L%
  */
 
-import android.content.UriMatcher;
-
 import java.io.File;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.PriorityQueue;
 import java.util.logging.Logger;
 
 import org.cmdmac.enlarge.server.ControllerInject;
@@ -51,11 +47,8 @@ import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.cmdmac.enlarge.server.handlers.DefaultHandler;
-import org.cmdmac.enlarge.server.handlers.Error404UriHandler;
-import org.cmdmac.enlarge.server.handlers.IndexHandler;
-import org.cmdmac.enlarge.server.handlers.NotImplementedHandler;
 import org.cmdmac.enlarge.server.handlers.StaticPageHandler;
-import org.cmdmac.enlarge.server.pocessor.IRouter;
+import org.cmdmac.enlarge.server.processor.IRouter;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.websockets.NanoWSD;

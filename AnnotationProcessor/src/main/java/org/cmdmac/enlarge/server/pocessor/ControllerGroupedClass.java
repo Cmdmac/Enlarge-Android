@@ -5,6 +5,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.cmdmac.enlarge.server.processor.IRouter;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
