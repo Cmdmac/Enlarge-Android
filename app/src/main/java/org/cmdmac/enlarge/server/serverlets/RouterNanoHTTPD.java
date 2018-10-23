@@ -110,41 +110,22 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             return null;
         }
     }
+
     public static class UriRouter extends BaseRouter {
 
         RouterMatcher mStaticMatcher = new RouterMatcher("", StaticPageHandler.class);
         public UriRouter() {
             super();
-//            addRoute(StaticPageHandler.class);
-            mappings.add(mStaticMatcher);
-        }
-
-        @Override
-        public void addRoute(Class<?> handler) {
-            mappings.add(new RouterMatcher("/", handler));
-        }
-
-        public void addRoute(String url, Class<?> handler) {
-            mappings.add(new RouterMatcher(url, handler));
-        }
-
-        @Override
-        public Response process(IHTTPSession session) {
-            Response response = super.process(session);
-            if (response == null) {
-                return mStaticMatcher.process(null, session);
-            } else {
-                return response;
-            }
-        }
-    }
-
-    static class ControllerRouter extends BaseRouter {
-
-        public ControllerRouter() {
-            super();
             //add controllers
             ControllerInject.inject(this);
+//            addRoute(StaticPageHandler.class);
+            mappings.add(mStaticMatcher);
+
+        }
+
+        public void addRoute(ControllerMatcher.RequestMappingParams requestMappingParams) {
+            RouterMatcher resource = new ControllerMatcher(requestMappingParams);
+            mappings.add(resource);
         }
 
         @Override
@@ -186,58 +167,40 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             }
         }
 
-        public void addRoute(ControllerMatcher.RequestMappingParams requestMappingParams) {
-            RouterMatcher resource = new ControllerMatcher(requestMappingParams);
-            mappings.add(resource);
+        public void addRoute(String url, Class<?> handler) {
+            mappings.add(new RouterMatcher(url, handler));
         }
 
+        @Override
+        public Response process(IHTTPSession session) {
+            Response response = super.process(session);
+            if (response == null) {
+                return mStaticMatcher.process(null, session);
+            } else {
+                return response;
+            }
+        }
     }
 
-    private ArrayList<BaseRouter> routers;
+    private UriRouter router;
 
     public RouterNanoHTTPD(int port) {
         super(port);
-        routers = new ArrayList<>();
-        routers.add(new ControllerRouter());
-        routers.add(new UriRouter());
+        router = new UriRouter();
     }
 
     public RouterNanoHTTPD(String hostname, int port) {
         super(hostname, port);
-        routers = new ArrayList<>();
-        routers.add(new ControllerRouter());
-        routers.add(new UriRouter());
+        router = new UriRouter();
     }
 
-    /**
-     * default routings, they are over writable.
-     * 
-     * <pre>
-     * router.setNotFoundHandler(GeneralHandler.class);
-     * </pre>
-     */
-
-    public void addMappings() {
-//        router.setNotImplemented(NotImplementedHandler.class);
-//        router.setNotFoundHandler(Error404UriHandler.class);
-//        router.setStaticHandler(StaticPageHandler.class);
-////        router.addRoute("/", Integer.MAX_VALUE / 2, IndexHandler.class);
-//        router.addRoute("/index.html", Integer.MAX_VALUE / 2, IndexHandler.class);
+    public void addRoute(String url, Class<?> handler) {
+        router.addRoute(url, handler);
     }
-
-//    public void addRoute(String url, Class<?> handler, Object... initParameter) {
-//        router.addRoute(url, 100, handler, initParameter);
-//    }
 
     @Override
     public Response serve(IHTTPSession session) {
         // Try to find match
-        for (BaseRouter router : routers) {
-            Response response = router.process(session);
-            if (response != null) {
-                return response;
-            }
-        }
-        return null;
+        return router.process(session);
     }
 }

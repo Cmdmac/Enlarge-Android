@@ -56,6 +56,7 @@ import org.cmdmac.enlarge.server.controllers.desktop.DesktopHandler;
 import org.cmdmac.enlarge.server.controllers.filemanager.FileManagerHandler;
 import org.cmdmac.enlarge.server.controllers.phone.PhoneHandler;
 import org.cmdmac.enlarge.server.controllers.photo.PhotoHandler;
+import org.cmdmac.enlarge.server.handlers.TestHandler;
 import org.cmdmac.enlarge.server.serverlets.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
@@ -152,19 +153,8 @@ public class AppNanolets extends RouterNanoHTTPD {
     }
 
 
-    /**
-     * Add the routes Every route is an absolute path Parameters starts with ":"
-     * Handler class should implement @UriResponder interface If the handler not
-     * implement UriResponder interface - toString() is used
-     */
-    @Override
     public void addMappings() {
-        super.addMappings();
-//        addRoute("/filemanager/list", FileManagerHandler.class);
-//        addRoute("/filemanager/delete", FileManagerHandler.class);
-//        addRoute("/sdcard", StaticPageHandler.class);
-
-//        ControllerRegister.inject(this);
+//        addRoute("/test", TestHandler.class);
     }
 
     /**
