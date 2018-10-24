@@ -79,7 +79,31 @@ public class ControllerMatcher extends RouterMatcher {
         return (Response)requestMappingParams.methodReflect.invoke(object, params.toArray());
     }
 
-    private Object valueToObject(Type t, String v) {
+    public static Object valueToObject(Type t, String v) {
+        try {
+            if (t == int.class) {
+                return Integer.parseInt(v);
+            } else if (t == long.class) {
+                return Long.parseLong(v);
+            } else if (t == float.class) {
+                return Float.parseFloat(v);
+            } else if (t == Integer.class) {
+                return Integer.parseInt(v);
+            } else if (t == Long.class) {
+                return Long.parseLong(v);
+            } else if (t == Float.class) {
+                return Float.parseFloat(v);
+            } else if (t == Long.class) {
+                return Long.parseLong(v);
+            } else {
+                return v;
+            }
+        } catch (Exception e) {
+            return v;
+        }
+    }
+
+    public static Object valueToObject(Class t, String v) {
         try {
             if (t == int.class) {
                 return Integer.parseInt(v);

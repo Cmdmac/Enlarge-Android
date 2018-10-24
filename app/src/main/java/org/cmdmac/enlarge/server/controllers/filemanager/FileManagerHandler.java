@@ -1,6 +1,7 @@
 package org.cmdmac.enlarge.server.controllers.filemanager;
 
 import android.graphics.Bitmap;
+import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
 
@@ -11,11 +12,15 @@ import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.DesktopApp;
 import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
+import org.cmdmac.enlarge.server.serverlets.ControllerMatcher;
+import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.http.response.Status;
 
 import java.io.*;
 import java.io.File;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by fengzhiping on 2018/10/12.
@@ -44,38 +49,6 @@ public class FileManagerHandler {
 //    }
 //
 //    @Override
-//    public Response get(IHTTPSession session) {
-//        String uri = session.getUri();
-//        Map<String, List<String>> params = session.getParameters();
-//        Uri u = Uri.parse(uri);
-//        String op = u.getLastPathSegment();
-//        if ("list".equals(op)) {
-//            if (params.containsKey("dir")) {
-//
-//                List<String> dirs = params.get("dir");
-//                if (dirs.size() > 0 && !TextUtils.isEmpty(dirs.get(0))) {
-//                    return list(dirs.get(0));
-//                } else {
-//                    java.io.File dir = Environment.getExternalStorageDirectory();
-//                    return list(dir.getAbsolutePath());
-//                }
-//            }
-//        } else if ("getThumb".equals(op)) {
-//            List<String> dirs = params.get("path");
-//            if (dirs.size() > 0 && !TextUtils.isEmpty(dirs.get(0))) {
-//                return getThumb(dirs.get(0));
-//            }
-//        } else if ("mkDir".equals(op)) {
-//            List<String> dirs = params.get("dir");
-//            if (dirs.size() > 0 && !TextUtils.isEmpty(dirs.get(0))) {
-//                List<String> dirName = params.get("name");
-//                if (dirName.size() > 0 && !TextUtils.isEmpty(dirName.get(0))) {
-//                    return mkDir(dirs.get(0), dirName.get(0));
-//                }
-//            }
-//        }
-//        return super.get(session);
-//    }
 
     @RequestMapping(path= "list")
     public Response list(@Param(name = "dir", value = "/sdcard") String path) {
@@ -107,6 +80,20 @@ public class FileManagerHandler {
 
     @RequestMapping(path= "mkDir")
     public Response mkDir(@Param(name = "dir") String path, @Param(name = "name") String dirName) {
+        java.io.File f = new File(path, dirName);
+        JSONObject jsonObject = new JSONObject();
+        if (f.mkdir()) {
+            jsonObject.put("code", 200);
+        } else {
+            jsonObject.put("code", 500);
+        }
+        Response response = Response.newFixedLengthResponse(Status.OK, "application/json", jsonObject.toJSONString());
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        return response;
+    }
+
+    @RequestMapping(path= "test")
+    public Response test(@Param(name = "dir") String path, @Param(name = "testName") String dirName, int test) {
         java.io.File f = new File(path, dirName);
         JSONObject jsonObject = new JSONObject();
         if (f.mkdir()) {

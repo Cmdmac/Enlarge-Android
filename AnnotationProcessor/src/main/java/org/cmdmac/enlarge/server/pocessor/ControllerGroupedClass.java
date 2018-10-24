@@ -9,8 +9,11 @@ import org.cmdmac.enlarge.server.processor.IRouter;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.logging.Filter;
 
 import javax.annotation.processing.Filer;
+import javax.annotation.processing.Messager;
+import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.util.Elements;
 
@@ -35,8 +38,19 @@ public class ControllerGroupedClass {
         list.clear();
     }
 
-    public void generateCode(Elements elementUtils, Filer filer) throws IOException {
+    public void generateCode(RoundEnvironment roundEnv, Elements elementUtils, Filer filer, Messager messager) throws IOException {
+        if (list.size() > 0) {
+            //auto inject class
+            generateInjectCode(filer);
+        }
 
+        //generate each handler class
+        for (ControllerAnnotatedClass annotatedClass : list) {
+            annotatedClass.generateCode(roundEnv, elementUtils, filer, messager);
+        }
+    }
+
+    private void generateInjectCode(Filer filer) throws IOException {
         String packageName = "org.cmdmac.enlarge.server";//pkg.isUnnamed() ? null : pkg.getQualifiedName().toString();
 
         MethodSpec.Builder method = MethodSpec.methodBuilder("inject")

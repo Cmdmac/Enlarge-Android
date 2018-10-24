@@ -7,8 +7,10 @@ import org.cmdmac.enlarge.server.annotations.RequestMapping;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.lang.annotation.Annotation;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -21,6 +23,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
+import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -33,6 +36,7 @@ public class ControllerProcessor extends AbstractProcessor {
     private Filer mFiler;
     private Messager mMessager;
     private Elements mElementUtils;
+
     private ControllerGroupedClass classes = new ControllerGroupedClass();
 
     @Override
@@ -47,6 +51,7 @@ public class ControllerProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         Set<String> annotations = new LinkedHashSet<>();
         annotations.add(Controller.class.getCanonicalName());
+//        annotations.add(RequestMapping.class.getCanonicalName());
         return annotations;
     }
 
@@ -57,9 +62,8 @@ public class ControllerProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> set, RoundEnvironment roundEnv) {
-        note("process");
+//        note("process");
         try {
-            // Scan classes
             for (Element annotatedElement : roundEnv.getElementsAnnotatedWith(Controller.class)) {
 
                 // Check if a class has been annotated with @Factory
@@ -71,19 +75,18 @@ public class ControllerProcessor extends AbstractProcessor {
                 // We can cast it, because we know that it of ElementKind.CLASS
                 TypeElement typeElement = (TypeElement) annotatedElement;
 
-                ControllerAnnotatedClass annotatedClass = new ControllerAnnotatedClass(typeElement);
+                ControllerAnnotatedClass annotatedClass = new ControllerAnnotatedClass(typeElement, mMessager);
 
 //                checkValidClass(annotatedClass);
 
-                note("haha=" + annotatedClass.getName());
+                note("process " + annotatedClass.getSimpleName());
                 // Checks if id is conflicting with another @Factory annotated class with the same id
                 classes.add(annotatedClass);
             }
 
             // Generate code
-            classes.generateCode(mElementUtils, mFiler);
+            classes.generateCode(roundEnv, mElementUtils, mFiler, mMessager);
             classes.clear();
-            return true;
         } catch (ProcessingException e) {
             e.printStackTrace();
         } catch (IOException e) {
