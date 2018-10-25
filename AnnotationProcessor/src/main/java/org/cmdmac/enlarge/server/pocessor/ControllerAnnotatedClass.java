@@ -2,6 +2,7 @@ package org.cmdmac.enlarge.server.pocessor;
 
 
 import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
@@ -12,6 +13,8 @@ import com.squareup.javapoet.WildcardTypeName;
 import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
+import org.cmdmac.enlarge.server.processor.BaseController;
+import org.cmdmac.enlarge.server.processor.IRouter;
 import org.cmdmac.enlarge.server.processor.StringUtils;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.response.Response;
@@ -30,6 +33,7 @@ import javax.lang.model.element.ExecutableElement;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
+import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Elements;
 import javax.tools.Diagnostic;
 
@@ -38,40 +42,14 @@ public class ControllerAnnotatedClass {
     private TypeElement annotatedClassElement;
     private String qualifiedClassName;
     private String simpleName;
-//    private String name;
-    private boolean needPermissionControll;
 
     /**
      * @throws ProcessingException if id() from annotation is null
      */
     public ControllerAnnotatedClass(TypeElement classElement, Messager messager) throws ProcessingException {
         this.annotatedClassElement = classElement;
-        Controller annotation = classElement.getAnnotation(Controller.class);
-//        name = annotation.name();
-//        needPermissionControll = annotation.needPermissonControl();
-
-//        if (StringUtils.isEmpty(name)) {
-//            throw new ProcessingException(classElement,
-//                    "name() in @%s for class %s is null or empty! that's not allowed",
-//                    Controller.class.getSimpleName(), classElement.getQualifiedName().toString());
-//        }
-
-        // Get the full QualifiedTypeName
-//        try {
-//            Class<?> clazz = annotation.getClass();
-//            qualifiedClassName = clazz.getCanonicalName();
-//            simpleName = clazz.getSimpleName();
-//        } catch (MirroredTypeException mte) {
-//            DeclaredType classTypeMirror = (DeclaredType) mte.getTypeMirror();
-//            TypeElement classTypeElement = (TypeElement) classTypeMirror.asElement();
-//            qualifiedClassName = classTypeElement.getQualifiedName().toString();
-//            simpleName = classTypeElement.getSimpleName().toString();
-//        }
-
-
         this.qualifiedClassName = this.annotatedClassElement.getQualifiedName().toString();
         this.simpleName = this.annotatedClassElement.getSimpleName().toString();
-
     }
 
     /**
@@ -99,6 +77,14 @@ public class ControllerAnnotatedClass {
         return annotatedClassElement;
     }
 
+    /**
+     * 生成相关处理类
+     * @param roundEnv
+     * @param elementUtils
+     * @param filer
+     * @param messager
+     * @throws IOException
+     */
     public void generateCode(RoundEnvironment roundEnv, Elements elementUtils, Filer filer, Messager messager) throws IOException {
         TypeElement typeElement = this.annotatedClassElement;
 
@@ -106,8 +92,6 @@ public class ControllerAnnotatedClass {
         int index = fullName.lastIndexOf('.');
         String pkgName = fullName.substring(0, index);
         String className = fullName.substring(index + 1);
-
-//        Controller controller = typeElement.getAnnotation(Controller.class);
 
         // 方法列表
         ArrayList<MethodSpec> methodSpecs = new ArrayList<>();
@@ -127,11 +111,14 @@ public class ControllerAnnotatedClass {
                 .addException(InstantiationException.class)
                 .returns(TypeName.get(Response.class));
 
-        getMethod.beginControlFlow("if (!org.cmdmac.enlarge.server.AppNanolets.PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) ")
-                .addStatement("return org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse(\"not allow\")")
-                .endControlFlow();
+        Controller controller = typeElement.getAnnotation(Controller.class);
+        if (controller.needPermissonControl()) {
+            getMethod.beginControlFlow("if (!org.cmdmac.enlarge.server.AppNanolets.PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) ")
+                    .addStatement("return org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse(\"not allow\")")
+                    .endControlFlow();
+        }
 
-        getMethod.addStatement("String uri = session.getUri()");
+        getMethod.addStatement("String uri = session.getUri().substring(1)");
         getMethod.addStatement("java.util.Map<String, java.util.List<String>> params = session.getParameters()");
         getMethod.addStatement("String path = uri.substring(uri.indexOf('/') + 1)");
 
@@ -144,8 +131,19 @@ public class ControllerAnnotatedClass {
                 RequestMapping requestMapping = (RequestMapping) annotation;
 //                messager.printMessage(Diagnostic.Kind.NOTE, eElement.getSimpleName() + "--");
 
+                String invokeAndReturnStatement = String.format("return invoke_%s(params)",eElement.getSimpleName());
+                TypeMirror returnType = eElement.getReturnType();
+
+//                messager.printMessage(Diagnostic.Kind.NOTE, returnType.toString() + "--" + Response.class.getCanonicalName());
+
+                // check method return type
+                if (!returnType.toString().equals(Response.class.getCanonicalName())) {
+                    invokeAndReturnStatement = "return null";
+                    continue;
+                }
+
                 getMethod.beginControlFlow(String.format("if (\"%s\".equals(path))", requestMapping.path()))
-                        .addStatement(String.format("return invoke_%s(params)",eElement.getSimpleName()))
+                        .addStatement(invokeAndReturnStatement)
                         .endControlFlow();
                 MethodSpec m = generateMethodCode(className, eElement.getSimpleName().toString(),
                         eElement.getParameters(), messager);
@@ -157,15 +155,27 @@ public class ControllerAnnotatedClass {
         methodSpecs.add(getMethod.build());
 
         //创建类,增加方法
-        TypeSpec.Builder classSpec = TypeSpec.classBuilder(className + "_Handler")
+        ParameterizedTypeName typeName = ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(ClassName.get(pkgName, className)));
+        FieldSpec fieldSpec = FieldSpec.builder(typeName, "cls").initializer(getQualifiedName() + ".class").build();
+        TypeSpec.Builder classSpec = TypeSpec.classBuilder(className + "_Proxy")
                 .addModifiers(Modifier.PUBLIC)
-                .addField(ParameterizedTypeName.get(ClassName.get(Class.class), WildcardTypeName.subtypeOf(ClassName.get(pkgName, className))), "cls");
+                .addSuperinterface(TypeName.get(BaseController.class))
+                .addField(fieldSpec);
         for (MethodSpec methodSpec : methodSpecs) {
             classSpec.addMethod(methodSpec);
         }
         JavaFile.builder(pkgName, classSpec.build()).build().writeTo(filer);
     }
 
+    /**
+     * 生成调用方法　
+     * @param clsName
+     * @param invokeMethodName
+     * @param ves
+     * @param messager
+     * @return
+     * @throws IOException
+     */
     private MethodSpec generateMethodCode(String clsName, String invokeMethodName, List<? extends VariableElement> ves, Messager messager) throws IOException {
 
         String methodName = String.format("invoke_%s", invokeMethodName);
@@ -200,9 +210,26 @@ public class ControllerAnnotatedClass {
 //            messager.printMessage(Diagnostic.Kind.NOTE,  "-" + ve.asType() + "-" + ve.getSimpleName());
         }
 
-        methodSpecBuilder.addStatement(String.format("object.%s(%s);", invokeMethodName, sb.toString()));
+        methodSpecBuilder.addStatement(String.format("return object.%s(%s)", invokeMethodName, sb.toString()));
 
-        methodSpecBuilder.addStatement("return null");
         return methodSpecBuilder.build();
+    }
+
+    public void generateInjectCode(MethodSpec.Builder methodSpec, Elements elements, Messager messager) throws IOException {
+        messager.printMessage(Diagnostic.Kind.NOTE, "generateInjectCode");
+
+        Controller controller = annotatedClassElement.getAnnotation(Controller.class);
+        for (Element ee : elements.getAllMembers(this.annotatedClassElement)) {
+            ExecutableElement eElement = (ExecutableElement) ee;
+            Annotation annotation = eElement.getAnnotation(RequestMapping.class);
+            if (annotation != null) {
+//                messager.printMessage(Diagnostic.Kind.NOTE, annotation.toString() + "--");
+
+                RequestMapping requestMapping = (RequestMapping) annotation;
+                String fullPath = controller.name() + '/' + requestMapping.path();
+                methodSpec.addStatement("router.addRoute(\"" + fullPath + "\", " + this.getQualifiedName() + "_Proxy.class)");
+            }
+        }
+
     }
 }

@@ -42,6 +42,7 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Logger;
 
+//import org.cmdmac.enlarge.server.ControllerInject;
 import org.cmdmac.enlarge.server.ControllerInject;
 import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.Param;
@@ -116,52 +117,13 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
         }
 
-        public void addRoute(ControllerMatcher.RequestMappingParams requestMappingParams) {
-            RouterMatcher resource = new ControllerMatcher(requestMappingParams);
-            mappings.add(resource);
-        }
-
         @Override
-        public void addRoute(Class<?> controller) {
-//            super.addRoute(handler);
-// has controller annotation
-            if (controller.isAnnotationPresent(Controller.class)) {
-                Controller controllerAnnotation = controller.getAnnotation(Controller.class);
-                String name = controllerAnnotation.name();
-                boolean needPermissionControl = controllerAnnotation.needPermissonControl();
-                Method[] methods = controller.getDeclaredMethods();
-                // get all request mapping annotation
-                for (Method method : methods) {
-                    if (method.isAnnotationPresent(RequestMapping.class)) {
-                        RequestMapping requestMapping = method.getAnnotation(RequestMapping.class);
-                        String path = requestMapping.path();
-                        org.nanohttpd.protocols.http.request.Method m = requestMapping.method();
-                        // build full path
-                        String fullPath = name + File.separatorChar + path;
-                        // getparams
-                        ArrayList<Param> params = new ArrayList<>();
-                        Annotation[][] paramAnnotation = method.getParameterAnnotations();
-                        for (Annotation[] an : paramAnnotation) {
-                            if (an.length > 0) {
-                                Param p = (Param)an[0];
-                                params.add(p);
-                            }
-                        }
-                        ControllerMatcher.RequestMappingParams requestMappingParams = new ControllerMatcher.RequestMappingParams();
-                        requestMappingParams.path = fullPath;
-                        requestMappingParams.handler = controller;
-                        requestMappingParams.method = m;
-                        requestMappingParams.methodReflect = method;
-                        requestMappingParams.params = params;
-                        requestMappingParams.needPermissionControl = needPermissionControl;
-                        addRoute(requestMappingParams);
-                    }
-                }
-            }
+        public void addRoute(Class<?> handler) {
+            mappings.add(new ControllerMatcher("/", handler));
         }
 
         public void addRoute(String url, Class<?> handler) {
-            mappings.add(new RouterMatcher(url, handler));
+            mappings.add(new ControllerMatcher(url, handler));
         }
 
         @Override

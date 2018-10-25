@@ -16,4 +16,5 @@ import java.lang.annotation.Target;
 public @interface RequestMapping {
     String path() default "";
     Method method() default Method.GET;
+    String mineType() default "application/json";
 }

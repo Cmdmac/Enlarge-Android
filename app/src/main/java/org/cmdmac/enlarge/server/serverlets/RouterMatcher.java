@@ -113,18 +113,6 @@ public class RouterMatcher implements /*Comparable<RouterMatcher>,*/ UriMatcher 
         return uri;
     }
 
-//    public <T> T initParameter(Class<T> paramClazz) {
-//        return initParameter(0, paramClazz);
-//    }
-//
-//    public <T> T initParameter(int parameterIndex, Class<T> paramClazz) {
-//        if (initParameter.length > parameterIndex) {
-//            return paramClazz.cast(initParameter[parameterIndex]);
-//        }
-////        LOG.severe("init parameter index not available " + parameterIndex);
-//        return null;
-//    }
-
     public Map<String, String> match(String url) {
         Matcher matcher = uriPattern.matcher(url);
         if (matcher.matches()) {
@@ -140,22 +128,5 @@ public class RouterMatcher implements /*Comparable<RouterMatcher>,*/ UriMatcher 
         }
         return null;
     }
-
-//    @Override
-//    public int compareTo(RouterMatcher that) {
-//        if (that == null) {
-//            return 1;
-//        } else if (this.priority > that.priority) {
-//            return 1;
-//        } else if (this.priority < that.priority) {
-//            return -1;
-//        } else {
-//            return 0;
-//        }
-//    }
-//
-//    public void setPriority(int priority) {
-//        this.priority = priority;
-//    }
 
 }

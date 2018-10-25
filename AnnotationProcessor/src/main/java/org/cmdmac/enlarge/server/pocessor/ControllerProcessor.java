@@ -1,9 +1,14 @@
 package org.cmdmac.enlarge.server.pocessor;
 
 import com.google.auto.service.AutoService;
+import com.squareup.javapoet.JavaFile;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeName;
+import com.squareup.javapoet.TypeSpec;
 
 import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
+import org.cmdmac.enlarge.server.processor.IRouter;
 
 import java.io.IOException;
 import java.io.Writer;
@@ -24,6 +29,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.Element;
 import javax.lang.model.element.ElementKind;
 import javax.lang.model.element.ExecutableElement;
+import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.element.VariableElement;
@@ -74,13 +80,9 @@ public class ControllerProcessor extends AbstractProcessor {
 
                 // We can cast it, because we know that it of ElementKind.CLASS
                 TypeElement typeElement = (TypeElement) annotatedElement;
-
+//                Controller controller = typeElement.getAnnotation(Controller.class);
                 ControllerAnnotatedClass annotatedClass = new ControllerAnnotatedClass(typeElement, mMessager);
-
-//                checkValidClass(annotatedClass);
-
                 note("process " + annotatedClass.getSimpleName());
-                // Checks if id is conflicting with another @Factory annotated class with the same id
                 classes.add(annotatedClass);
             }
 
@@ -94,8 +96,6 @@ public class ControllerProcessor extends AbstractProcessor {
         }
         return false;
     }
-
-
 
     private void note(String msg) {
         mMessager.printMessage(Diagnostic.Kind.NOTE, msg);

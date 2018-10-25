@@ -28,7 +28,6 @@ public class DesktopHandler {
 
     @RequestMapping(path = "getApps")
     public Response getApps() {
-
         JSONArray json = new JSONArray();
         try {
             for (int i = 0; i < AppNanolets.DESKTOP_APPS.length; i++) {

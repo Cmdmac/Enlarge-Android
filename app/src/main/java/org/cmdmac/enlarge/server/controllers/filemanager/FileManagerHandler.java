@@ -28,27 +28,6 @@ import java.util.Map;
 @Controller(name = "filemanager")
 @DesktopApp(name = "FileManager", icon = "images/ic_launcher_document.png")
 public class FileManagerHandler {
-//    @Override
-//    public String getMimeType() {
-//        return "application/json";
-//    }
-//
-//    @Override
-//    public String getText() {
-//        return null;
-//    }
-//
-//    @Override
-//    public IStatus getStatus() {
-//        return Status.OK;
-//    }
-//
-//    @Override
-//    public Response get(RouterNanoHTTPD.RouterMatcher uriResource, Map<String, String> urlParams, IHTTPSession session) {
-//        return get(session);
-//    }
-//
-//    @Override
 
     @RequestMapping(path= "list")
     public Response list(@Param(name = "dir", value = "/sdcard") String path) {

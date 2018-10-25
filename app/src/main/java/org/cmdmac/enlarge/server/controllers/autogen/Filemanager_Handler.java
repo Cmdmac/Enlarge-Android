@@ -20,11 +20,11 @@ public class Filemanager_Handler implements BaseController {
     }
 
 
-    public Response invoke_list(Map<String, List<String>> params) throws IllegalAccessException, InstantiationException {
-        FileManagerHandler object = cls.newInstance();
-        String v1 = (String) ControllerMatcher.valueToObject(String.class, Utils.getParam(params, "dir"));
-        return object.list(v1);
-    }
+//    public Response invoke_list(Map<String, List<String>> params) throws IllegalAccessException, InstantiationException {
+//        FileManagerHandler object = cls.newInstance();
+//        String v1 = (String) ControllerMatcher.valueToObject(String.class, Utils.getParam(params, "dir"));
+//        return object.list(v1);
+//    }
 
     public Response get(IHTTPSession session) throws IllegalAccessException, InstantiationException {
         if (!AppNanolets.PermissionEntries.isRemoteAllow(session.getRemoteIpAddress())) {
