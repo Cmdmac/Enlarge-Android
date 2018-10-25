@@ -1,4 +1,4 @@
-package org.cmdmac.enlarge.server.processor;
+package org.cmdmac.enlarge.server.serverlets;
 
 public interface IRouter {
     void addRoute(Class<?> handler);
