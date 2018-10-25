@@ -73,6 +73,7 @@ public class ControllerProcessor extends AbstractProcessor {
             // Generate code
             classes.generateCode(roundEnv, mElementUtils, mFiler, mMessager);
             classes.clear();
+            return true;
         } catch (ProcessingException e) {
             e.printStackTrace();
         } catch (IOException e) {
