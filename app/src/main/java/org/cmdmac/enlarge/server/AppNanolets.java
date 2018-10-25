@@ -41,9 +41,6 @@ public class AppNanolets extends RouterNanoHTTPD {
     //    private static boolean ENABLE_REMOTE_CONNECT = false;
     public static final int PORT = 9090;
 
-    public static Class<?>[] DESKTOP_APPS = new Class[] {FileManagerHandler.class, CalendarHandler.class, PhoneHandler.class,
-            PhotoHandler.class};
-
     private PermissionProcesser permissionProcesser;
 
     public static class PermissionEntries {

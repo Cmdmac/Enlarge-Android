@@ -1,10 +1,12 @@
 package org.cmdmac.enlarge.server.pocessor;
 
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import org.cmdmac.enlarge.server.annotations.DesktopApp;
 import org.cmdmac.enlarge.server.serverlets.IRouter;
 
 import java.io.IOException;
@@ -14,6 +16,7 @@ import javax.annotation.processing.Filer;
 import javax.annotation.processing.Messager;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.element.Modifier;
+import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.Elements;
 
 public class ControllerGroupedClass {
@@ -54,14 +57,31 @@ public class ControllerGroupedClass {
                 .addParameter(IRouter.class, "router")
                 .returns(TypeName.get(void.class));
 
+        // desktop config
+        FieldSpec.Builder fieldSpecBuilder = FieldSpec.builder(Class[].class, "DESKTOP_APPS")
+                .addModifiers(Modifier.PUBLIC)
+                .addModifiers(Modifier.STATIC);
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("new Class[] {");
         //generate each handler class
         for (ControllerAnnotatedClass annotatedClass : list) {
-
+            TypeElement typeElement = annotatedClass.getTypeElement();
+            DesktopApp desktopApp = typeElement.getAnnotation(DesktopApp.class);
+            if (desktopApp != null) {
+                sb.append(annotatedClass.getQualifiedName()).append(".class").append(',');
+            }
             annotatedClass.generateCode(roundEnv, elementUtils, filer, messager);
             annotatedClass.generateInjectCode(method, elementUtils, messager);
         }
+        sb.deleteCharAt(sb.length() - 1);
+        sb.append('}');
+        fieldSpecBuilder.initializer(sb.toString());
 
-        TypeSpec typeSpec = TypeSpec.classBuilder("ControllerInject").addModifiers(Modifier.PUBLIC).addMethod(method.build()).build();
+        TypeSpec typeSpec = TypeSpec.classBuilder("ControllerInject")
+                .addModifiers(Modifier.PUBLIC)
+                .addField(fieldSpecBuilder.build())
+                .addMethod(method.build()).build();
 //         Write file
         JavaFile.builder(packageName, typeSpec).build().writeTo(filer);
     }

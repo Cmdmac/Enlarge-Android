@@ -11,6 +11,7 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.WildcardTypeName;
 
 import org.cmdmac.enlarge.server.annotations.Controller;
+import org.cmdmac.enlarge.server.annotations.DesktopApp;
 import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.cmdmac.enlarge.server.processor.BaseController;
@@ -229,6 +230,5 @@ public class ControllerAnnotatedClass {
                 methodSpec.addStatement("router.addRoute(\"" + fullPath + "\", " + this.getQualifiedName() + "_Proxy.class)");
             }
         }
-
     }
 }

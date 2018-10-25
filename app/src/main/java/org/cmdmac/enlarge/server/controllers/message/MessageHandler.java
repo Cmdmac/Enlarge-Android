@@ -8,6 +8,5 @@ import org.cmdmac.enlarge.server.annotations.DesktopApp;
  */
 
 @Controller(name = "message")
-@DesktopApp(name = "Message", icon = "images/message.jpeg")
 public class MessageHandler {
 }

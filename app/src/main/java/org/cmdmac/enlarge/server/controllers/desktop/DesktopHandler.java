@@ -1,6 +1,7 @@
 package org.cmdmac.enlarge.server.controllers.desktop;
 
 import org.cmdmac.enlarge.server.AppNanolets;
+import org.cmdmac.enlarge.server.ControllerInject;
 import org.cmdmac.enlarge.server.annotations.Controller;
 import org.cmdmac.enlarge.server.annotations.DesktopApp;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
@@ -30,13 +31,15 @@ public class DesktopHandler {
     public Response getApps() {
         JSONArray json = new JSONArray();
         try {
-            for (int i = 0; i < AppNanolets.DESKTOP_APPS.length; i++) {
-                Class<?> cls = AppNanolets.DESKTOP_APPS[i];
+            for (int i = 0; i < ControllerInject.DESKTOP_APPS.length; i++) {
+                Class<?> cls = ControllerInject.DESKTOP_APPS[i];
                 DesktopApp desktopApp = cls.getAnnotation(DesktopApp.class);
-                JSONObject object = new JSONObject();
-                object.put("name", desktopApp.name());
-                object.put("icon", desktopApp.icon());
-                json.put(i, object);
+                if (desktopApp != null) {
+                    JSONObject object = new JSONObject();
+                    object.put("name", desktopApp.name());
+                    object.put("icon", desktopApp.icon());
+                    json.put(i, object);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
