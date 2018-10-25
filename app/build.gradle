@@ -35,5 +35,6 @@ dependencies {
 //    provided fileTree(include: ['*.jar'], dir: "processorLib")
     compile project(path: ':Annotations')
     compileOnly project(':AnnotationProcessor')
+    implementation 'org.greenrobot:eventbus:3.0.0'
 
 }

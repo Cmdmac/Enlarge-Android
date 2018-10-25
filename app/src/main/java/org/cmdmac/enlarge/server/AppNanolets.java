@@ -16,12 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.cmdmac.enlarge.server.controllers.calendar.CalendarHandler;
-import org.cmdmac.enlarge.server.controllers.desktop.DesktopHandler;
-import org.cmdmac.enlarge.server.controllers.filemanager.FileManagerHandler;
-import org.cmdmac.enlarge.server.controllers.phone.PhoneHandler;
-import org.cmdmac.enlarge.server.controllers.photo.PhotoHandler;
-import org.cmdmac.enlarge.server.handlers.TestHandler;
+import org.cmdmac.enlarge.server.eventbus.ConnectedChangeEvent;
 import org.cmdmac.enlarge.server.serverlets.RouterNanoHTTPD;
 import org.cmdmac.enlarge.server.websocket.Command;
 import org.cmdmac.enlarge.server.websocket.EnlargeWebSocket;
@@ -30,8 +25,8 @@ import org.cmdmac.rx.Observable;
 import org.cmdmac.rx.observable.ObservableEmitter;
 import org.cmdmac.rx.observable.ObservableOnSubscribe;
 import org.cmdmac.rx.scheduler.Schedulers;
+import org.greenrobot.eventbus.EventBus;
 import org.nanohttpd.protocols.http.IHTTPSession;
-import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.websockets.WebSocket;
 import org.nanohttpd.util.ServerRunner;
 
@@ -54,16 +49,6 @@ public class AppNanolets extends RouterNanoHTTPD {
         }
         private static HashMap<String, PermissionItem> mPermissionMap = new HashMap<>();
 
-        public static void setPermissionChangeListener(OnPermissonChange listener) {
-            sPermisisonChangeListeners = listener;
-        }
-
-        private static OnPermissonChange sPermisisonChangeListeners = null;
-
-        public static interface OnPermissonChange {
-            void onChange(String[] connectedList);
-        }
-
         public static String[] getConnectedList() {
             ArrayList<String> list = new ArrayList<>();
             for(Map.Entry<String, PermissionItem> entry : mPermissionMap.entrySet()) {
@@ -75,9 +60,7 @@ public class AppNanolets extends RouterNanoHTTPD {
         public static void allowRemote(String remote) {
             PermissionItem item = new PermissionItem(remote, System.currentTimeMillis());
             mPermissionMap.put(remote, item);
-            if (sPermisisonChangeListeners != null) {
-                sPermisisonChangeListeners.onChange(getConnectedList());
-            }
+            EventBus.getDefault().post(new ConnectedChangeEvent(getConnectedList()));
         }
 
         public static boolean isRemoteAllow(String remote) {
@@ -86,9 +69,7 @@ public class AppNanolets extends RouterNanoHTTPD {
                 long t = System.currentTimeMillis() - item.time;
                 if (Math.abs(t) > 60 * 30 * 1000) {
                     mPermissionMap.remove(remote);
-                    if (sPermisisonChangeListeners != null) {
-                        sPermisisonChangeListeners.onChange(getConnectedList());
-                    }
+                    EventBus.getDefault().post(new ConnectedChangeEvent(getConnectedList()));
                     return false;
                 }
                 return true;
