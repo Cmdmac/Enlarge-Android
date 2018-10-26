@@ -14,7 +14,7 @@ import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.widget.Toast;
 
-import org.cmdmac.enlarge.server.eventbus.ActivityResultEvent;
+import org.cmdmac.enlarge.server.eventbus.PermissionResultEvent;
 import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
@@ -135,19 +135,13 @@ public class PermissionChecker {
     }
 
     @Subscribe(threadMode = ThreadMode.MAIN)
-    public void onActivityResult(ActivityResultEvent event) {
-        Log.e("DDD", "on");
-        onActivityResult(event.requestCode, event.resultCode, event.data);
-    }
-
-
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == 123) {
-            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                // 检查该权限是否已经获取
-                int i = ContextCompat.checkSelfPermission(builder.activity, builder.permission);
+    public void onPermissionResult(PermissionResultEvent event) {
+        if (event.requestCode == 321 && event.permissions[0].equals(builder.permission)) {
+//            if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                // 检查该权限是否已经获取
+//                int i = ContextCompat.checkSelfPermission(builder.activity, builder.permission);
                 // 权限是否已经 授权 GRANTED---授权  DINIED---拒绝
-                if (i != PackageManager.PERMISSION_GRANTED) {
+                if (event.results[0] != PackageManager.PERMISSION_GRANTED) {
                     // 提示用户应该去应用设置界面手动开启权限
                     showDialogTipUserGoToAppSettting();
                 } else {
@@ -160,7 +154,7 @@ public class PermissionChecker {
                     }
                 }
             }
-        }
+//        }
     }
 
     AlertDialog mAlertDialog;

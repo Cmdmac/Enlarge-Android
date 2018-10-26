@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,7 +13,7 @@ import android.widget.TextView;
 import com.google.zxing.client.android.CaptureActivity;
 
 import org.cmdmac.enlarge.server.AppNanolets;
-import org.cmdmac.enlarge.server.eventbus.ActivityResultEvent;
+import org.cmdmac.enlarge.server.eventbus.PermissionResultEvent;
 import org.cmdmac.enlarge.server.eventbus.ConnectedChangeEvent;
 import org.cmdmac.enlarge.server.utils.Utils;
 import org.cmdmac.enlargeserver.R;
@@ -48,9 +49,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        EventBus.getDefault().post(new PermissionResultEvent(requestCode, permissions, grantResults));
+    }
+
+    @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        EventBus.getDefault().post(new ActivityResultEvent(requestCode, resultCode, data));
     }
 
     public void onClick(View v) {
