@@ -14,6 +14,7 @@ import org.cmdmac.enlarge.server.annotations.Param;
 import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.cmdmac.enlarge.server.serverlets.ControllerMatcher;
 import org.nanohttpd.protocols.http.IHTTPSession;
+import org.nanohttpd.protocols.http.NanoHTTPD;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.http.response.Status;
 
@@ -39,6 +40,34 @@ public class FileManagerHandler {
         Response response = Response.newFixedLengthResponse(Status.OK, "application/json", json);
         response.addHeader("Access-Control-Allow-Origin", "*");
         return response;
+    }
+
+    @RequestMapping(path = "download")
+    public Response download(@Param(name = "path") String path) {
+        java.io.File f = new File(path);
+        if(f.exists()) {
+            try {
+                FileInputStream fileInputStream = new FileInputStream(f);
+                return Response.newFixedLengthResponse(Status.OK, "application/octet-stream", fileInputStream, f.length());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return Response.newFixedLengthResponse("not found");
+    }
+
+    @RequestMapping(path = "open")
+    public Response open(@Param(name = "path") String path) {
+        java.io.File f = new File(path);
+        if(f.exists()) {
+            try {
+                FileInputStream fileInputStream = new FileInputStream(f);
+                return Response.newFixedLengthResponse(Status.OK, NanoHTTPD.getMimeTypeForFile(path), fileInputStream, f.length());
+            } catch (FileNotFoundException e) {
+                e.printStackTrace();
+            }
+        }
+        return Response.newFixedLengthResponse("not found");
     }
 
     @RequestMapping(path= "getThumb")
