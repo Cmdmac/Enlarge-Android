@@ -56,16 +56,6 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
         public Response process(IHTTPSession session) {
             String work = DefaultHandler.normalizeUri(session.getUri());
-            if  (session.getMethod() == Method.POST) {
-                HashMap<String, String> map = new HashMap<>();
-                try {
-                    session.parseBody(map);
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } catch (ResponseException e) {
-                    e.printStackTrace();
-                }
-            }
             Map<String, String> params = null;
             for (RouterMatcher u : mappings) {
                 params = u.match(work);
@@ -128,6 +118,16 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
     @Override
     public Response serve(IHTTPSession session) {
         // Try to find match
+        if  (session.getMethod() == Method.POST) {
+            HashMap<String, String> map = new HashMap<>();
+            try {
+                session.parseBody(map);
+            } catch (IOException e) {
+                e.printStackTrace();
+            } catch (ResponseException e) {
+                e.printStackTrace();
+            }
+        }
         return router.process(session);
     }
 }

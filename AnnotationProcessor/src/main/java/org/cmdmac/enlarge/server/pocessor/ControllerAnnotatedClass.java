@@ -143,6 +143,9 @@ public class ControllerAnnotatedClass {
                 }
 
                 getMethod.beginControlFlow(String.format("if (\"%s\".equals(path))", requestMapping.path()))
+                        .beginControlFlow("if (session.getMethod() != org.nanohttpd.protocols.http.request.Method." + requestMapping.method() + ")")
+                        .addStatement("return org.nanohttpd.protocols.http.response.Response.newFixedLengthResponse(org.nanohttpd.protocols.http.response.Status.INTERNAL_ERROR, \"text/plain\",\"method not support\")")
+                        .endControlFlow()
                         .addStatement(invokeAndReturnStatement)
                         .endControlFlow();
                 MethodSpec m = generateMethodCode(className, eElement.getSimpleName().toString(),
