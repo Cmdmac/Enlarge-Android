@@ -1,7 +1,9 @@
 package org.cmdmac.enlarge.server.serverlets;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -11,6 +13,7 @@ import org.cmdmac.enlarge.server.ControllerInject;
 import org.cmdmac.enlarge.server.handlers.DefaultHandler;
 import org.cmdmac.enlarge.server.handlers.StaticPageHandler;
 import org.nanohttpd.protocols.http.IHTTPSession;
+import org.nanohttpd.protocols.http.request.Method;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.websockets.NanoWSD;
 
@@ -53,6 +56,16 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
 
         public Response process(IHTTPSession session) {
             String work = DefaultHandler.normalizeUri(session.getUri());
+            if  (session.getMethod() == Method.POST) {
+                HashMap<String, String> map = new HashMap<>();
+                try {
+                    session.parseBody(map);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                } catch (ResponseException e) {
+                    e.printStackTrace();
+                }
+            }
             Map<String, String> params = null;
             for (RouterMatcher u : mappings) {
                 params = u.match(work);

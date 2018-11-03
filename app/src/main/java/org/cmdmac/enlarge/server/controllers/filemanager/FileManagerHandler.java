@@ -15,6 +15,7 @@ import org.cmdmac.enlarge.server.annotations.RequestMapping;
 import org.cmdmac.enlarge.server.serverlets.ControllerMatcher;
 import org.nanohttpd.protocols.http.IHTTPSession;
 import org.nanohttpd.protocols.http.NanoHTTPD;
+import org.nanohttpd.protocols.http.request.Method;
 import org.nanohttpd.protocols.http.response.Response;
 import org.nanohttpd.protocols.http.response.Status;
 
@@ -86,11 +87,14 @@ public class FileManagerHandler {
         return Response.newFixedLengthResponse("not found");
     }
 
-    @RequestMapping(path= "mkDir")
+    @RequestMapping(path= "mkDir", method = Method.POST)
     public Response mkDir(@Param(name = "dir") String path, @Param(name = "name") String dirName) {
         java.io.File f = new File(path, dirName);
         JSONObject jsonObject = new JSONObject();
-        if (f.mkdir()) {
+        if (f.exists()) {
+            jsonObject.put("code", 500);
+            jsonObject.put("message", "already exists!");
+        } else if (f.mkdir()){
             jsonObject.put("code", 200);
         } else {
             jsonObject.put("code", 500);
