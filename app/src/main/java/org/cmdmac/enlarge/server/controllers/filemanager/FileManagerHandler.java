@@ -104,6 +104,23 @@ public class FileManagerHandler {
         return response;
     }
 
+    @RequestMapping(path = "upload", method = Method.POST)
+    public Response upload(String fileName, String tmpFileName) {
+        java.io.File f = new File(tmpFileName);
+        java.io.File of = new File("/sdcard", fileName);
+        boolean success = FileUtils.copy(f.getAbsolutePath(), of.getAbsolutePath());
+        JSONObject jsonObject = new JSONObject();
+        if (success) {
+            jsonObject.put("code", 200);
+        } else {
+            jsonObject.put("code", 500);
+            jsonObject.put("message", "upload failure");
+        }
+        Response response = Response.newFixedLengthResponse(Status.OK, "application/json", jsonObject.toJSONString());
+        response.addHeader("Access-Control-Allow-Origin", "*");
+        return response;
+    }
+
     @RequestMapping(path= "test")
     public Response test(@Param(name = "dir") String path, @Param(name = "testName") String dirName, int test) {
         java.io.File f = new File(path, dirName);

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Logger;
 
@@ -122,6 +123,14 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             HashMap<String, String> map = new HashMap<>();
             try {
                 session.parseBody(map);
+                for(Map.Entry<String, String> entry : map.entrySet()) {
+                    String key = entry.getKey();
+                    String value = entry.getValue();
+                    Map<String, List<String>> params = session.getParameters();
+                    List<String> l = new ArrayList<>();
+                    l.add(value);
+                    params.put(key, l);
+                }
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ResponseException e) {

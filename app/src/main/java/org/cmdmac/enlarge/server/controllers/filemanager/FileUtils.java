@@ -4,6 +4,10 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.ThumbnailUtils;
 
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+
 /**
  * Created by fengzhiping on 2018/10/13.
  */
@@ -49,5 +53,44 @@ public class FileUtils {
         bitmap = ThumbnailUtils.extractThumbnail(bitmap, width, height,
                 ThumbnailUtils.OPTIONS_RECYCLE_INPUT);
         return bitmap;
+    }
+
+    public static boolean copy(String source, String target) {
+        java.io.File sf = new java.io.File(source);
+        if  (!sf.exists()) {
+            return false;
+        }
+        FileInputStream fileInputStream = null;
+        FileOutputStream fileOutputStream = null;
+        try {
+            fileInputStream = new FileInputStream(sf);
+            fileOutputStream = new FileOutputStream(target);
+            byte[] buffer = new byte[1024];
+            int n = -1;
+            while ((n = fileInputStream.read(buffer)) > 0) {
+                fileOutputStream.write(buffer, 0, n);
+            }
+            sf.delete();
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+        } finally {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (fileOutputStream != null) {
+                try {
+                    fileOutputStream.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        return false;
     }
 }
