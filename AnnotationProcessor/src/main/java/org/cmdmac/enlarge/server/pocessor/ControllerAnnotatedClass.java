@@ -203,9 +203,18 @@ public class ControllerAnnotatedClass {
                 key = param.name();
             }
             String p = String.format("v%d", i + 1);
-            String s = String.format("%s %s = (%s) org.cmdmac.enlarge.server.processor.Utils.valueToObject(%s.class, org.cmdmac.enlarge.server.processor.Utils.getParam(params, \"%s\"))",
-                    ve.asType(), p,  ve.asType(), ve.asType(), key);
-            methodSpecBuilder.addStatement(s);
+            TypeMirror typeMirror = ve.asType();
+//            messager.printMessage(Diagnostic.Kind.NOTE, typeMirror.toString() + ":" + String[].class.getCanonicalName());
+            if (typeMirror.toString().equals(String[].class.getCanonicalName())) {
+//                messager.printMessage(Diagnostic.Kind.NOTE, typeMirror.toString());
+                String s = String.format("%s %s = (%s) org.cmdmac.enlarge.server.processor.Utils.getParamArray(params, \"%s\")",
+                        ve.asType(), p, ve.asType(), key);
+                methodSpecBuilder.addStatement(s);
+            } else {
+                String s = String.format("%s %s = (%s) org.cmdmac.enlarge.server.processor.Utils.valueToObject(%s.class, org.cmdmac.enlarge.server.processor.Utils.getParam(params, \"%s\"))",
+                        ve.asType(), p, ve.asType(), ve.asType(), key);
+                methodSpecBuilder.addStatement(s);
+            }
             sb.append(p);
             if (i != ves.size() -1) {
                 sb.append(',');

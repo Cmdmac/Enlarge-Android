@@ -3,6 +3,7 @@ package org.cmdmac.enlarge.server.serverlets;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -123,14 +124,16 @@ public abstract class RouterNanoHTTPD extends NanoWSD {
             HashMap<String, String> map = new HashMap<>();
             try {
                 session.parseBody(map);
-                for(Map.Entry<String, String> entry : map.entrySet()) {
-                    String key = entry.getKey();
-                    String value = entry.getValue();
-                    Map<String, List<String>> params = session.getParameters();
-                    List<String> l = new ArrayList<>();
-                    l.add(value);
-                    params.put(key, l);
+                Map<String, List<String>> params = session.getParameters();
+                ArrayList<String> fileNames = new ArrayList<>();
+                ArrayList<String> tmpFilePaths = new ArrayList<>();
+                for (Map.Entry<String, String> entry : map.entrySet()) {
+                    String filename = params.get(entry.getKey()).get(0);
+                    fileNames.add(filename);
+                    tmpFilePaths.add(entry.getValue());
                 }
+                session.getParameters().put("fileNames", fileNames);
+                session.getParameters().put("tmpFilePaths", tmpFilePaths);
             } catch (IOException e) {
                 e.printStackTrace();
             } catch (ResponseException e) {

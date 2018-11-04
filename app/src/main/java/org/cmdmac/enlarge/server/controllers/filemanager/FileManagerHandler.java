@@ -4,6 +4,7 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Environment;
 import android.text.TextUtils;
+import android.util.Log;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
@@ -105,10 +106,19 @@ public class FileManagerHandler {
     }
 
     @RequestMapping(path = "upload", method = Method.POST)
-    public Response upload(String fileName, String tmpFileName) {
-        java.io.File f = new File(tmpFileName);
-        java.io.File of = new File("/sdcard", fileName);
-        boolean success = FileUtils.copy(f.getAbsolutePath(), of.getAbsolutePath());
+    public Response upload(String[] fileNames, String[] tmpFilePaths, String dir) {
+        boolean success = true;
+        for (int i = 0; i < tmpFilePaths.length; i++) {
+            java.io.File f = new File(tmpFilePaths[i]);
+            java.io.File of = new File(dir, fileNames[i]);
+            if (FileUtils.copy(f.getAbsolutePath(), of.getAbsolutePath()) == false) {
+                success = false;
+            } else {
+//                success = true;
+                Log.v(FileManagerHandler.class.getSimpleName(), "upload file=" + fileNames[i] + " success");
+            }
+//            boolean success = FileUtils.copy(f.getAbsolutePath(), of.getAbsolutePath());
+        }
         JSONObject jsonObject = new JSONObject();
         if (success) {
             jsonObject.put("code", 200);
